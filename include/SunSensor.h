@@ -18,6 +18,7 @@ public:
     unsigned int getThreshold();
     void dim(int value) override;
     unsigned int getLevel() override;
+    void setLevel(unsigned int level) override;
     bool read();
 };
 
@@ -61,6 +62,11 @@ void SunSensor::dim(int level)
 unsigned int SunSensor::getLevel()
 {
     return this->threshold;
+}
+
+void SunSensor::setLevel(unsigned int level)
+{
+    this->setThreshold(level);
 }
 
 #endif  // SunSensor_h_

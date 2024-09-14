@@ -30,7 +30,8 @@ void DimmableLed::setLevel(unsigned int level)
 
 void DimmableLed::dim(int offset)
 {
-    this->setLevel(this->level + (offset * this->multiplier));
+    const int level = this->level + (offset * this->multiplier);
+    this->setLevel(level > 0 ? level : 0);
 }
 
 unsigned int DimmableLed::getLevel()
