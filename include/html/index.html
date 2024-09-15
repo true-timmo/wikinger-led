@@ -36,8 +36,11 @@ const char index_html[] PROGMEM = R"rawliteral(
   .card {
     background-color: #F8F7F9;;
     box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);
-    padding:10px;
+    padding:10px 10px 0px;
     margin-bottom:5px;
+  }
+  .card p{
+    padding-bottom:5px;
   }
   .button {
     padding: 15px 50px;
@@ -128,6 +131,15 @@ const char index_html[] PROGMEM = R"rawliteral(
     </div>
 
     <div class="card">
+      <p class="state sensorEnabled">
+        <span>Darkness handler enabled: </span><input type="checkbox" name="darkness" id="darkness" value="1"/>
+        <script>
+          let darknessEnabled = %DARKNESS_ENABLED%;
+          if (darknessEnabled) {
+            document.getElementById('darkness').checked = "checked";
+          }
+        </script>
+      </p>
       <p class="state sensor">
         <select  name="select" id="sensor">
           <script>
@@ -174,12 +186,21 @@ const char index_html[] PROGMEM = R"rawliteral(
           select.addEventListener('change', changeSelection);
       });
   }
+  function initCheckbox() {
+      const checkbox = document.getElementById('darkness');
+      checkbox.addEventListener('change', changeCheckbox);
+  }
   function changeSelection(event) {
     websocket.send(event.target.id + ':' + event.target.value);
-  }  
+  }
+  function changeCheckbox(event) {
+    let isChecked = event.target.checked ? 1 : 0;
+    websocket.send(event.target.id + ':' + isChecked);
+  }    
   function onLoad(event) {
     initWebSocket();
     initSelect();
+    initCheckbox();
   }
 </script>
 </body>

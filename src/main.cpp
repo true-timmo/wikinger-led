@@ -36,7 +36,7 @@ SunSensor sensor(A0, 50, 7);
 Encoder encoder(D5, D4);
 TargetSwitcher ledSwitch(D6);
 MultiTargetEncoder multiTargetEncoder(&ledSwitch);
-DarknessHandler darknessHandler;
+DarknessHandler darknessHandler(&eventHandler);
 
 void initWebSocket() {
   ws.onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
@@ -52,6 +52,7 @@ String processor(const String& var)
   if (var == "GREEN_VALUE") return String(greenLed.getLevel());
   if (var == "BLUE_VALUE") return String(blueLed.getLevel());
   if (var == "SENSOR_VALUE") return String(sensor.getLevel()); 
+  if (var == "DARKNESS_ENABLED") return String(darknessHandler.getLevel());
   if (var == "SENSOR_LIMIT") return String(128);
 
   return String();
@@ -82,6 +83,7 @@ void setup()
   eventHandler.addTarget("green", &greenLed);
   eventHandler.addTarget("blue", &blueLed);
   eventHandler.addTarget("sensor", &sensor);
+  eventHandler.addTarget("darkness", &darknessHandler);
 
   initWebSocket();
 

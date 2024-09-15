@@ -16,6 +16,7 @@ class WebSocketEventHandler
 
     public:
         WebSocketEventHandler(AsyncWebSocket* ws);
+        void textAll(String text);
         void addTarget(const char* name, Dimmable* target);
         void updateTarget(const char* name, int value);
         void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,void *arg, uint8_t *data, size_t len);
@@ -50,10 +51,15 @@ void WebSocketEventHandler::updateTarget(const char* target, int value)
             EEPROM.commit();
 
             this->targets[index]->setLevel(value);
-            this->ws->textAll(String(target) + ":" + String(value));
+            this->textAll(String(target) + ":" + String(value));
         }
         ++index;
     }
+}
+
+void WebSocketEventHandler::textAll(String text)
+{
+    this->ws->textAll(text);
 }
 
 void WebSocketEventHandler::onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
