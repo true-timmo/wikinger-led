@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <EEPROM.h>
 #include <Encoder.h>
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
@@ -29,13 +28,13 @@ AsyncWebSocket ws("/ws");
 WebSocketEventHandler eventHandler(&ws);
 IPAddress myIP;
 
-DimmableLed redLed(D0, 255);
-DimmableLed greenLed(D1, 0);
-DimmableLed blueLed(D2, 0);
+DimmableLed redLed(D1, 255);
+DimmableLed greenLed(D2, 0);
+DimmableLed blueLed(D3, 0);
 SunSensor sensor(A0, 50, 7);
 
-Encoder encoder(D4, D3);
-TargetSwitcher ledSwitch(D5);
+Encoder encoder(D5, D4);
+TargetSwitcher ledSwitch(D6);
 MultiTargetEncoder multiTargetEncoder(&ledSwitch);
 DarknessHandler darknessHandler;
 
@@ -61,6 +60,7 @@ String processor(const String& var)
 void setup()
 {
   Serial.begin(9600);
+  EEPROM.begin(32);
   delay(100);
 
   boolean result = WiFi.softAP(ap_ssid, ap_pwd);

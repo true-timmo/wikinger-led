@@ -3,10 +3,12 @@
 
 #include "Dimmable.h"
 #include <ESPAsyncWebServer.h>
+#include <EEPROM.h>
 
 class WebSocketEventHandler
 {
     private:
+        const unsigned int eepromSize = 2;
         AsyncWebSocket* ws;
         std::vector<const char*> targetNames;
         std::vector<Dimmable*> targets;
@@ -27,6 +29,12 @@ void WebSocketEventHandler::addTarget(const char* name, Dimmable* target)
 {
     this->targetNames.push_back(name);
     this->targets.push_back(target);
+
+    const int lastIndex = this->targets.size() - 1;
+    const unsigned int eepromIndex = this->eepromSize * lastIndex;
+    if (EEPROM.read(eepromIndex) == 1) {
+             target->setLevel(EEPROM.read(eepromIndex + 1));
+    }
 }
 
 void WebSocketEventHandler::updateTarget(const char* target, int value)
@@ -35,6 +43,12 @@ void WebSocketEventHandler::updateTarget(const char* target, int value)
     for (const auto& name : this->targetNames) {
         if (strcmp(target, name) == 0)
         {
+            //Too lazy to implement a class, so let's hack this for now
+            const unsigned int eepromIndex = this->eepromSize * index;
+            EEPROM.write(eepromIndex, 1);
+            EEPROM.write(eepromIndex + 1, value);
+            EEPROM.commit();
+
             this->targets[index]->setLevel(value);
             this->ws->textAll(String(target) + ":" + String(value));
         }
