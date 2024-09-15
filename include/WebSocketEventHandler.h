@@ -8,14 +8,14 @@ class WebSocketEventHandler
 {
     private:
         AsyncWebSocket* ws;
-        std::vector<char*> targetNames;
+        std::vector<const char*> targetNames;
         std::vector<Dimmable*> targets;
         void handleWebSocketMessage(void *arg, uint8_t *data, size_t len);
 
     public:
         WebSocketEventHandler(AsyncWebSocket* ws);
-        void addTarget(char* name, Dimmable* target);
-        void updateTarget(char* name, int value);
+        void addTarget(const char* name, Dimmable* target);
+        void updateTarget(const char* name, int value);
         void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,void *arg, uint8_t *data, size_t len);
 };
 
@@ -23,13 +23,13 @@ WebSocketEventHandler::WebSocketEventHandler(AsyncWebSocket* ws) {
     this->ws = ws;
 }
 
-void WebSocketEventHandler::addTarget(char* name, Dimmable* target)
+void WebSocketEventHandler::addTarget(const char* name, Dimmable* target)
 {
     this->targetNames.push_back(name);
     this->targets.push_back(target);
 }
 
-void WebSocketEventHandler::updateTarget(char* target, int value)
+void WebSocketEventHandler::updateTarget(const char* target, int value)
 {
     unsigned int index = 0;
     for (const auto& name : this->targetNames) {

@@ -45,7 +45,7 @@ unsigned int SunSensor::getThreshold()
 
 bool SunSensor::read()
 {
-    const int sensorValue = 0; //analogRead(this->pin);
+    const int sensorValue = analogRead(this->pin);
     const int lowerThreshold = this->threshold - this->sensitivity;
     const int upperThreshold = this->threshold + this->sensitivity;
 

@@ -76,6 +76,9 @@ const char index_html[] PROGMEM = R"rawliteral(
    .state.blue {
      background-color:blue;
    }
+   .state.sensor {
+     background-color:grey;
+   }   
   </style>
 </head>
 <body>
@@ -87,7 +90,7 @@ const char index_html[] PROGMEM = R"rawliteral(
       <p class="state red">
         <select name="select" id="red">
           <script>
-            let redValue = 100;
+            let redValue = %RED_VALUE%;
             for (let i = 0; i <= 255; i++) {
                 let selected = i == redValue ? ' selected="selected"' : '';
                 document.write('<option value="' + i + '"' + selected + '>' + i + '</option>');
@@ -100,7 +103,7 @@ const char index_html[] PROGMEM = R"rawliteral(
       <p class="state green">
         <select name="select" id="green">
           <script>
-            let greenValue = 100;
+            let greenValue = %GREEN_VALUE%;
             for (let i = 0; i <= 255; i++) {
                 let selected = i == greenValue ? ' selected="selected"' : '';
                 document.write('<option value="' + i + '"' + selected + '>' + i + '</option>');
@@ -113,7 +116,7 @@ const char index_html[] PROGMEM = R"rawliteral(
       <p class="state blue">
         <select  name="select" id="blue">
           <script>
-            let blueValue = 100;
+            let blueValue = %BLUE_VALUE%;
             for (let i = 0; i <= 255; i++) {
                 let selected = i == blueValue ? ' selected="selected"' : '';
                 document.write('<option value="' + i + '"' + selected + '>' + i + '</option>');
@@ -123,6 +126,22 @@ const char index_html[] PROGMEM = R"rawliteral(
       </select>
     </p>
     </div>
+
+    <div class="card">
+      <p class="state sensor">
+        <select  name="select" id="sensor">
+          <script>
+            let sensorValue = %SENSOR_VALUE%;
+            let sensorLimit = %SENSOR_LIMIT%;
+            for (let i = 0; i <= sensorLimit; i++) {
+                let selected = i == sensorValue ? ' selected="selected"' : '';
+                document.write('<option value="' + i + '"' + selected + '>' + i + '</option>');
+            }
+          </script>
+          </select>
+      </select>
+    </p>
+    </div>    
     <div class="card">
       <p class="state" id="log"><!-- log here --></p>
     </div>

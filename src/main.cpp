@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <EEPROM.h>
 #include <Encoder.h>
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
@@ -31,7 +32,7 @@ IPAddress myIP;
 DimmableLed redLed(D0, 255);
 DimmableLed greenLed(D1, 0);
 DimmableLed blueLed(D2, 0);
-SunSensor sensor(A0, 20, 7);
+SunSensor sensor(A0, 50, 7);
 
 Encoder encoder(D4, D3);
 TargetSwitcher ledSwitch(D5);
@@ -48,6 +49,12 @@ void initWebSocket() {
 
 String processor(const String& var)
 {
+  if (var == "RED_VALUE") return String(redLed.getLevel());
+  if (var == "GREEN_VALUE") return String(greenLed.getLevel());
+  if (var == "BLUE_VALUE") return String(blueLed.getLevel());
+  if (var == "SENSOR_VALUE") return String(sensor.getLevel()); 
+  if (var == "SENSOR_LIMIT") return String(128);
+
   return String();
 }
 
@@ -67,9 +74,14 @@ void setup()
   multiTargetEncoder.addDimmable(&greenLed);
   multiTargetEncoder.addDimmable(&blueLed);
 
+  darknessHandler.addLed(&redLed);
+  darknessHandler.addLed(&greenLed);
+  darknessHandler.addLed(&blueLed);
+
   eventHandler.addTarget("red", &redLed);
   eventHandler.addTarget("green", &greenLed);
   eventHandler.addTarget("blue", &blueLed);
+  eventHandler.addTarget("sensor", &sensor);
 
   initWebSocket();
 
