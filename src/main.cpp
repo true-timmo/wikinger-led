@@ -9,7 +9,7 @@
 #include "SunSensor.h"
 #include "TargetSwitcher.h"
 #include "MultiTargetEncoder.h"
-#include "DarknessHandler.h"
+#include "LimitedDarknessHandler.h"
 #include "WebSocketEventHandler.h"
 
 #include "html/index.html"
@@ -36,7 +36,7 @@ SunSensor sensor(A0, 50, 7);
 Encoder encoder(D5, D4);
 TargetSwitcher ledSwitch(D6);
 MultiTargetEncoder multiTargetEncoder(&ledSwitch);
-DarknessHandler darknessHandler(&eventHandler);
+LimitedDarknessHandler darknessHandler(&eventHandler, 1000*3600*4);
 
 void initWebSocket() {
   ws.onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)

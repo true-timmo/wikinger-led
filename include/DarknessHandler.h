@@ -9,19 +9,49 @@ class DarknessHandler: public Dimmable
 {
 private:
     WebSocketEventHandler* eventHandler;
-    unsigned long sunSetTimestamp = 0;
     std::vector<Led*> leds;
     bool lightsOn = false;
-    bool darknessHandlerEnabled = true;
     
-public:
-    DarknessHandler(WebSocketEventHandler* eventHandler) {
-        this->eventHandler = eventHandler;
+protected:
+    bool darknessHandlerEnabled = true;
+    unsigned long sunsetTimestamp = 0;
+    void switchOff()
+    {
+        for (auto& led : this->leds) {
+            led->switchOff();
+        }
     };
+
+public:
     void addLed(Led* led);
-    void handleDarkness(bool isDark);
     String outputNightTime();
 
+    DarknessHandler(WebSocketEventHandler* eventHandle)
+    {
+        this->eventHandler = eventHandler;
+    };
+
+    virtual void handleDarkness(bool isDark)
+    {
+        if (!this->darknessHandlerEnabled) {
+            return;
+        }
+
+        if (isDark && !this->lightsOn) {
+            this->lightsOn = true;
+            this->sunsetTimestamp = millis();
+
+            for (auto& led : this->leds) {
+                led->switchOn();
+            }
+        }
+        else if (!isDark && this->lightsOn) {
+            this->lightsOn = false;
+            this->eventHandler->textAll(this->outputNightTime());
+            this->switchOff();
+        }
+    };
+    
     void dim(int value) override {};
     unsigned int getLevel() override;
     void setLevel(unsigned int level) override;
@@ -56,32 +86,9 @@ void DarknessHandler::addLed(Led* led)
     }
 }
 
-void DarknessHandler::handleDarkness(bool isDark)
-{
-    if (!this->darknessHandlerEnabled) {
-        return;
-    }
-
-     if (isDark && !this->lightsOn) {
-        this->lightsOn = true;
-        this->sunSetTimestamp = millis();
-
-        for (auto& led : this->leds) {
-            led->switchOn();
-        }
-    }
-    else if (!isDark && this->lightsOn) {
-        this->lightsOn = false;
-        this->eventHandler->textAll(this->outputNightTime());
-        for (auto& led : this->leds) {
-            led->switchOff();
-        }
-    }
-}
-
 String DarknessHandler::outputNightTime()
 {
-  const long lastNightSeconds = (millis() - this->sunSetTimestamp) / 1000;
+  const long lastNightSeconds = (millis() - this->sunsetTimestamp) / 1000;
 
   int hours = lastNightSeconds / 3600;
   int minutes = (lastNightSeconds % 3600) / 60;
