@@ -2,20 +2,23 @@
 #define TargetSwitcher_h_
 
 #include <Arduino.h>
+#include "DarknessHandler.h"
 
 class TargetSwitcher
 {
 private:
+    DarknessHandler* darknessHandler;
     int pin;
     unsigned int currentTarget = 0;
     unsigned int targetCount = 0;
-    static TargetSwitcher* instance;  // Statische Instanzreferenz
-    static void IRAM_ATTR switchTarget();  // Statische Funktion für ISR
     unsigned long lastDebounceTime = 0;    // Zeit des letzten registrierten Tastendrucks
     const unsigned long debounceDelay = 80;  // Entprellzeit
+    static TargetSwitcher* instance;  // Statische Instanzreferenz
+
+    static void IRAM_ATTR switchTarget();  // Statische Funktion für ISR
 
 public:
-    TargetSwitcher(int pin);
+    TargetSwitcher(int pin, DarknessHandler* darknessHandler);
     void handleSwitchTarget();  // Normale Instanzfunktion, die von der ISR aufgerufen wird
     void setTargetCount(unsigned int targetCount);
     unsigned int getTarget();
@@ -25,9 +28,10 @@ public:
 // Initialisiere den statischen Zeiger
 TargetSwitcher* TargetSwitcher::instance = nullptr;
 
-TargetSwitcher::TargetSwitcher(int pin)
+TargetSwitcher::TargetSwitcher(int pin, DarknessHandler* darknessHandler)
 {
     this->pin = pin;
+    this->darknessHandler = darknessHandler;
     pinMode(this->pin, INPUT);
 
     // Setze den statischen Zeiger auf die aktuelle Instanz
@@ -53,6 +57,7 @@ void TargetSwitcher::handleSwitchTarget()
     if (currentTime - lastDebounceTime > debounceDelay)
     {
         this->currentTarget = (this->currentTarget + 1) % (this->targetCount + 1);
+        this->darknessHandler->setLevel(0);
 
         lastDebounceTime = currentTime;
     }
@@ -71,6 +76,7 @@ unsigned int TargetSwitcher::getTarget()
 void TargetSwitcher::reset()
 {
     this->currentTarget = 0;
+    this->darknessHandler->setLevel(1);
 }
 
 #endif  // TargetSwitcher_h_

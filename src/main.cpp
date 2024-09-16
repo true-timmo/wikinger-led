@@ -34,9 +34,9 @@ DimmableLed blueLed(D3, 0);
 SunSensor sensor(A0, 50, 7);
 
 Encoder encoder(D5, D4);
-TargetSwitcher ledSwitch(D6);
-MultiTargetEncoder multiTargetEncoder(&ledSwitch);
 LimitedDarknessHandler darknessHandler(&eventHandler, 1000*3600*4);
+TargetSwitcher ledSwitch(D6, &darknessHandler);
+MultiTargetEncoder multiTargetEncoder(&ledSwitch);
 
 void initWebSocket() {
   ws.onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
@@ -106,7 +106,6 @@ void loop()
   ws.cleanupClients();
 
   long lastEncoderPosition = multiTargetEncoder.setEncoderPosition(encoder.read());
-  
   darknessHandler.handleDarkness(sensor.read());
 
   //Serial.print("targetLevel: ");
@@ -116,5 +115,5 @@ void loop()
   //Serial.print(", Target: ");
   //Serial.println(ledSwitch.getTarget());  
 
-  delay(200);
+  delay(400);
 }

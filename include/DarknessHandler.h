@@ -23,12 +23,30 @@ protected:
     };
 
 public:
-    void addLed(Led* led);
-    String outputNightTime();
-
-    DarknessHandler(WebSocketEventHandler* eventHandle)
+    DarknessHandler(WebSocketEventHandler* eventHandler)
     {
         this->eventHandler = eventHandler;
+    };
+
+    String outputNightTime()
+    {
+        const long lastNightSeconds = (millis() - this->sunsetTimestamp) / 1000;
+
+        int hours = lastNightSeconds / 3600;
+        int minutes = (lastNightSeconds % 3600) / 60;
+        int seconds = (lastNightSeconds % 60);
+
+        String formattedTime = String(seconds) + " Sekunden";
+
+        if (minutes > 0) {
+            formattedTime = String(minutes) + " Minuten, " + formattedTime;
+        }
+
+        if (hours > 0) {
+            formattedTime = String(hours) + " Stunden, " + formattedTime;
+        }
+
+        return formattedTime;
     };
 
     virtual void handleDarkness(bool isDark)
@@ -52,6 +70,7 @@ public:
         }
     };
     
+    void addLed(Led* led);
     void dim(int value) override {};
     unsigned int getLevel() override;
     void setLevel(unsigned int level) override;
@@ -84,27 +103,6 @@ void DarknessHandler::addLed(Led* led)
     if (led->isOn()) {
         this->lightsOn = true;
     }
-}
-
-String DarknessHandler::outputNightTime()
-{
-  const long lastNightSeconds = (millis() - this->sunsetTimestamp) / 1000;
-
-  int hours = lastNightSeconds / 3600;
-  int minutes = (lastNightSeconds % 3600) / 60;
-  int seconds = (lastNightSeconds % 60);
-
-  String formattedTime = String(seconds) + " Sekunden";
-
-  if (minutes > 0) {
-    formattedTime = String(minutes) + " Minuten, " + formattedTime;
-  }
-
-  if (hours > 0) {
-    formattedTime = String(hours) + " Stunden, " + formattedTime;
-  }
-
-  return formattedTime;
 }
 
 #endif  // DarknessHandler_h_
