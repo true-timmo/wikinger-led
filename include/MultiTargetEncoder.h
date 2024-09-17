@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <vector>
 #include "TargetSwitcher.h"
+#include "WebSocketEventHandler.h"
 #include "Dimmable.h"
 
 class MultiTargetEncoder
@@ -11,20 +12,20 @@ class MultiTargetEncoder
     private:
         long encoderPosition = -999;
         TargetSwitcher* targetSwitcher;
+        WebSocketEventHandler* eventHandler;
         std::vector<Dimmable*> dimmableTargets;
         unsigned long lastInputTime = 0;
 
     public:
-        MultiTargetEncoder(TargetSwitcher* targetSwitcher);
+        MultiTargetEncoder(TargetSwitcher* targetSwitcher, WebSocketEventHandler* eventHandler)
+        {
+            this->targetSwitcher = targetSwitcher;
+            this->eventHandler = eventHandler;
+        };
         void addDimmable(Dimmable* dimmable);
         unsigned int getTargetLevel();
         long setEncoderPosition(long encoderPosition);
 };
-
-MultiTargetEncoder::MultiTargetEncoder(TargetSwitcher* targetSwitcher)
-{
-    this->targetSwitcher = targetSwitcher;
-}
 
 long MultiTargetEncoder::setEncoderPosition(long encoderPosition)
 { 
@@ -45,9 +46,10 @@ long MultiTargetEncoder::setEncoderPosition(long encoderPosition)
 
 
   const int direction = encoderPosition > this->encoderPosition ? 1 : -1;
-  const int target = this->targetSwitcher->getTarget();
+  Dimmable* target = this->dimmableTargets[this->targetSwitcher->getTarget()];
 
-  this->dimmableTargets[target]->dim(direction);  // Zeiger dereferenzieren und Methode der abgeleiteten Klasse aufrufen
+  target->dim(direction);
+  this->eventHandler->textAll(String(target->getName()) + ":" + String(target->getLevel()));
   this->encoderPosition = encoderPosition;
   this->lastInputTime = millis();
 

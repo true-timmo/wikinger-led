@@ -28,15 +28,15 @@ AsyncWebSocket ws("/ws");
 WebSocketEventHandler eventHandler(&ws);
 IPAddress myIP;
 
-DimmableLed redLed(D1, 255);
-DimmableLed greenLed(D2, 0);
-DimmableLed blueLed(D3, 0);
-SunSensor sensor(A0, 50, 7);
+DimmableLed redLed(D1, "red", 255);
+DimmableLed greenLed(D2, "green", 0);
+DimmableLed blueLed(D3, "blue", 0);
+SunSensor sensor(A0, "sensor", 50, 7);
 
 Encoder encoder(D5, D4);
 LimitedDarknessHandler darknessHandler(&eventHandler, 1000*3600*4);
 TargetSwitcher ledSwitch(D6, &darknessHandler);
-MultiTargetEncoder multiTargetEncoder(&ledSwitch);
+MultiTargetEncoder multiTargetEncoder(&ledSwitch, &eventHandler);
 
 void initWebSocket() {
   ws.onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
@@ -79,11 +79,11 @@ void setup()
   darknessHandler.addLed(&greenLed);
   darknessHandler.addLed(&blueLed);
 
-  eventHandler.addTarget("red", &redLed);
-  eventHandler.addTarget("green", &greenLed);
-  eventHandler.addTarget("blue", &blueLed);
-  eventHandler.addTarget("sensor", &sensor);
-  eventHandler.addTarget("darkness", &darknessHandler);
+  eventHandler.addTarget(&redLed);
+  eventHandler.addTarget(&greenLed);
+  eventHandler.addTarget(&blueLed);
+  eventHandler.addTarget(&sensor);
+  eventHandler.addTarget(&darknessHandler);
 
   initWebSocket();
 

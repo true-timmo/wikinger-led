@@ -20,7 +20,18 @@ private:
     static void IRAM_ATTR switchTarget();  // Statische Funktion für ISR
 
 public:
-    TargetSwitcher(int pin, DarknessHandler* darknessHandler);
+    TargetSwitcher(int pin, DarknessHandler* darknessHandler)
+    {
+        this->pin = pin;
+        this->darknessHandler = darknessHandler;
+        pinMode(this->pin, INPUT);
+
+        // Setze den statischen Zeiger auf die aktuelle Instanz
+        instance = this;
+
+        attachInterrupt(digitalPinToInterrupt(this->pin), TargetSwitcher::switchTarget, RISING);
+    };
+
     void handleSwitchTarget();  // Normale Instanzfunktion, die von der ISR aufgerufen wird
     void setTargetCount(unsigned int targetCount);
     unsigned int getTarget();
@@ -29,18 +40,6 @@ public:
 
 // Initialisiere den statischen Zeiger
 TargetSwitcher* TargetSwitcher::instance = nullptr;
-
-TargetSwitcher::TargetSwitcher(int pin, DarknessHandler* darknessHandler)
-{
-    this->pin = pin;
-    this->darknessHandler = darknessHandler;
-    pinMode(this->pin, INPUT);
-
-    // Setze den statischen Zeiger auf die aktuelle Instanz
-    instance = this;
-
-    attachInterrupt(digitalPinToInterrupt(this->pin), TargetSwitcher::switchTarget, RISING);
-}
 
 // Statische ISR-Funktion
 void IRAM_ATTR TargetSwitcher::switchTarget()

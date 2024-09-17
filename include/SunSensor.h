@@ -13,7 +13,15 @@ private:
     bool isDark = false;
     
 public:
-    SunSensor(int pin, unsigned int threshold, unsigned int sensitivity);
+    SunSensor(int pin, const char* name, unsigned int threshold, unsigned int sensitivity): Dimmable(name)
+    {
+        this->pin = pin;
+        this->threshold = threshold;
+        this->sensitivity = sensitivity;
+
+        pinMode(this->pin, INPUT);
+    }
+    
     bool setThreshold(int threshold);
     unsigned int getThreshold();
     void dim(int value) override;
@@ -21,15 +29,6 @@ public:
     void setLevel(unsigned int level) override;
     bool read();
 };
-
-SunSensor::SunSensor(int pin, unsigned int threshold = 0, unsigned int sensitivity = 0)
-{
-    this->pin = pin;
-    this->threshold = threshold;
-    this->sensitivity = sensitivity;
-
-    pinMode(this->pin, INPUT);
-}
 
 bool SunSensor::setThreshold(int threshold)
 {

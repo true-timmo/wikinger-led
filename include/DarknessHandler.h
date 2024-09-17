@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "WebSocketEventHandler.h"
+#include "Dimmable.h"
 #include "Led.h"
 
 class DarknessHandler: public Dimmable
@@ -44,7 +45,7 @@ protected:
     };    
 
 public:
-    DarknessHandler(WebSocketEventHandler* eventHandler)
+    DarknessHandler(WebSocketEventHandler* eventHandler, const char* name = "darkness"): Dimmable(name)
     {
         this->eventHandler = eventHandler;
     };

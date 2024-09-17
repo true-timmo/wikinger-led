@@ -10,14 +10,13 @@ class WebSocketEventHandler
     private:
         const unsigned int eepromSize = 2;
         AsyncWebSocket* ws;
-        std::vector<const char*> targetNames;
         std::vector<Dimmable*> targets;
         void handleWebSocketMessage(void *arg, uint8_t *data, size_t len);
 
     public:
         WebSocketEventHandler(AsyncWebSocket* ws);
         void textAll(String text);
-        void addTarget(const char* name, Dimmable* target);
+        void addTarget(Dimmable* target);
         void updateTarget(const char* name, int value);
         void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,void *arg, uint8_t *data, size_t len);
 };
@@ -26,9 +25,8 @@ WebSocketEventHandler::WebSocketEventHandler(AsyncWebSocket* ws) {
     this->ws = ws;
 }
 
-void WebSocketEventHandler::addTarget(const char* name, Dimmable* target)
+void WebSocketEventHandler::addTarget(Dimmable* target)
 {
-    this->targetNames.push_back(name);
     this->targets.push_back(target);
 
     const int lastIndex = this->targets.size() - 1;
@@ -38,11 +36,11 @@ void WebSocketEventHandler::addTarget(const char* name, Dimmable* target)
     }
 }
 
-void WebSocketEventHandler::updateTarget(const char* target, int value)
+void WebSocketEventHandler::updateTarget(const char* name, int value)
 {
     unsigned int index = 0;
-    for (const auto& name : this->targetNames) {
-        if (strcmp(target, name) == 0)
+    for (const auto& target : this->targets) {
+        if (strcmp(target->getName(), name) == 0)
         {
             //Too lazy to implement a class, so let's hack this for now
             const unsigned int eepromIndex = this->eepromSize * index;
@@ -50,8 +48,8 @@ void WebSocketEventHandler::updateTarget(const char* target, int value)
             EEPROM.write(eepromIndex + 1, value);
             EEPROM.commit();
 
-            this->targets[index]->setLevel(value);
-            this->textAll(String(target) + ":" + String(value));
+            target->setLevel(value);
+            this->textAll(String(target->getName()) + ":" + String(value));
         }
         ++index;
     }
