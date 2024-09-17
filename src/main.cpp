@@ -104,6 +104,7 @@ void setup()
 void loop()
 {
   ws.cleanupClients();
+  ledSwitch.handleSwitchTarget();
 
   long lastEncoderPosition = multiTargetEncoder.setEncoderPosition(encoder.read());
   darknessHandler.handleDarkness(sensor.read());

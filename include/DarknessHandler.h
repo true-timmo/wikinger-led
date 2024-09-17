@@ -12,15 +12,36 @@ private:
     std::vector<Led*> leds;
     bool lightsOn = false;
     
+    void init() {
+        if (!this->darknessHandlerEnabled) {
+            this->switchOn();
+        }
+
+        if (this->darknessHandlerEnabled) {
+            this->switchOff();
+        }
+    };
+    
 protected:
     bool darknessHandlerEnabled = true;
     unsigned long sunsetTimestamp = 0;
+    
     void switchOff()
     {
+        this->lightsOn = false;
         for (auto& led : this->leds) {
             led->switchOff();
         }
     };
+
+    void switchOn()
+    {
+        this->sunsetTimestamp = millis();
+        this->lightsOn = true;
+        for (auto& led : this->leds) {
+            led->switchOn();
+        }
+    };    
 
 public:
     DarknessHandler(WebSocketEventHandler* eventHandler)
@@ -56,15 +77,9 @@ public:
         }
 
         if (isDark && !this->lightsOn) {
-            this->lightsOn = true;
-            this->sunsetTimestamp = millis();
-
-            for (auto& led : this->leds) {
-                led->switchOn();
-            }
+            this->switchOn();
         }
-        else if (!isDark && this->lightsOn) {
-            this->lightsOn = false;
+        else if (!isDark && this->lightsOn) {   
             this->eventHandler->textAll(this->outputNightTime());
             this->switchOff();
         }
@@ -76,7 +91,7 @@ public:
     void setLevel(unsigned int level) override;
 };
 
-unsigned int DarknessHandler::getLevel() 
+unsigned int DarknessHandler::getLevel()
 {
     return this->darknessHandlerEnabled;
 }
@@ -84,16 +99,7 @@ unsigned int DarknessHandler::getLevel()
 void DarknessHandler::setLevel(unsigned int level)
 {
     this->darknessHandlerEnabled = level > 0;
-    
-    if (this->darknessHandlerEnabled) {
-        this->lightsOn = false;
-        for (auto& led : this->leds) {
-            if (led->isOn()) {
-                this->lightsOn = true;
-                return;
-            }
-        }
-    }
+    this->init();
 }
 
 void DarknessHandler::addLed(Led* led)

@@ -9,6 +9,8 @@ class TargetSwitcher
 private:
     DarknessHandler* darknessHandler;
     int pin;
+    volatile bool buttonPressed = false;
+    volatile bool buttonHeld = false;
     unsigned int currentTarget = 0;
     unsigned int targetCount = 0;
     unsigned long lastDebounceTime = 0;    // Zeit des letzten registrierten Tastendrucks
@@ -45,27 +47,34 @@ void IRAM_ATTR TargetSwitcher::switchTarget()
 {
     if (instance != nullptr)
     {
-        // Rufe die Instanzmethode auf, um das Ziel zu aktualisieren
-        instance->handleSwitchTarget();
+        instance->buttonPressed = true;
     }
 }
 
 void TargetSwitcher::handleSwitchTarget()
 {
-    unsigned long currentTime = millis();
+    noInterrupts();
+    bool pressed = this->buttonPressed;
+    interrupts();
 
-    if (currentTime - lastDebounceTime > debounceDelay)
-    {
+    if (!pressed) {
+        return;
+    }
+
+    const unsigned long currentTime = millis();
+    if (currentTime - this->lastDebounceTime > this->debounceDelay) {
         this->currentTarget = (this->currentTarget + 1) % (this->targetCount + 1);
         this->darknessHandler->setLevel(0);
 
-        lastDebounceTime = currentTime;
+        this->lastDebounceTime = currentTime;
+        this->buttonPressed = false;
     }
 }
 
 void TargetSwitcher::setTargetCount(unsigned int targetCount)
 {
     this->targetCount = targetCount;
+    this->darknessHandler->setLevel(0);
 }
 
 unsigned int TargetSwitcher::getTarget()

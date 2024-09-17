@@ -70,6 +70,10 @@ const char index_html[] PROGMEM = R"rawliteral(
      color:#724944;
      font-weight: bold;
    }
+   .state input.range {
+     width: 100%;
+   }
+
    .state.red {
      background-color:red;
    }
@@ -91,43 +95,18 @@ const char index_html[] PROGMEM = R"rawliteral(
   <div class="content">
     <div class="card">
       <p class="state red">
-        <select name="select" id="red">
-          <script>
-            let redValue = %RED_VALUE%;
-            for (let i = 0; i <= 255; i++) {
-                let selected = i == redValue ? ' selected="selected"' : '';
-                document.write('<option value="' + i + '"' + selected + '>' + i + '</option>');
-            }
-          </script>
-        </select>
+        <input id="red" class="range" type="range" name="ledRange" min="0" max="255" step="1" value="%RED_VALUE%" />
       </p>
     </div>
     <div class="card">
       <p class="state green">
-        <select name="select" id="green">
-          <script>
-            let greenValue = %GREEN_VALUE%;
-            for (let i = 0; i <= 255; i++) {
-                let selected = i == greenValue ? ' selected="selected"' : '';
-                document.write('<option value="' + i + '"' + selected + '>' + i + '</option>');
-            }
-          </script>
-        </select>
+        <input id="green" class="range" type="range" name="ledRange" min="0" max="255" step="1" value="%GREEN_VALUE%" />
       </p>
     </div>      
     <div class="card">
       <p class="state blue">
-        <select  name="select" id="blue">
-          <script>
-            let blueValue = %BLUE_VALUE%;
-            for (let i = 0; i <= 255; i++) {
-                let selected = i == blueValue ? ' selected="selected"' : '';
-                document.write('<option value="' + i + '"' + selected + '>' + i + '</option>');
-            }
-          </script>
-          </select>
-      </select>
-    </p>
+        <input id="blue" class="range" type="range" name="ledRange" min="0" max="255" step="1" value="%BLUE_VALUE%" />
+      </p>
     </div>
 
     <div class="card">
@@ -141,18 +120,8 @@ const char index_html[] PROGMEM = R"rawliteral(
         </script>
       </p>
       <p class="state sensor">
-        <select  name="select" id="sensor">
-          <script>
-            let sensorValue = %SENSOR_VALUE%;
-            let sensorLimit = %SENSOR_LIMIT%;
-            for (let i = 0; i <= sensorLimit; i++) {
-                let selected = i == sensorValue ? ' selected="selected"' : '';
-                document.write('<option value="' + i + '"' + selected + '>' + i + '</option>');
-            }
-          </script>
-          </select>
-      </select>
-    </p>
+        <input id="sensor" type="range" name="sensorRange" min="0" max="%SENSOR_LIMIT%" step="1" value="%SENSOR_VALUE%" />
+      </p>
     </div>    
     <div class="card">
       <p class="state" id="log"><!-- log here --></p>
@@ -179,18 +148,18 @@ const char index_html[] PROGMEM = R"rawliteral(
   function onMessage(event) {
     document.getElementById('log').innerHTML = event.data;
   }
-  function initSelect() {
-      const selects = document.getElementsByName('select');
+  function initRange() {
+      const selects = document.getElementsByName('range');
 
       selects.forEach(function(select) {
-          select.addEventListener('change', changeSelection);
+          select.addEventListener('change', changeRange);
       });
   }
   function initCheckbox() {
       const checkbox = document.getElementById('darkness');
       checkbox.addEventListener('change', changeCheckbox);
   }
-  function changeSelection(event) {
+  function changeRange(event) {
     websocket.send(event.target.id + ':' + event.target.value);
   }
   function changeCheckbox(event) {
@@ -199,7 +168,7 @@ const char index_html[] PROGMEM = R"rawliteral(
   }    
   function onLoad(event) {
     initWebSocket();
-    initSelect();
+    initRange();
     initCheckbox();
   }
 </script>
