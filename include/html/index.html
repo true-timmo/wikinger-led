@@ -71,7 +71,7 @@ const char index_html[] PROGMEM = R"rawliteral(
      font-weight: bold;
    }
    .state input.range {
-     width: 100%%;
+     width: 90%%;
    }
 
    .state.red {
@@ -95,17 +95,17 @@ const char index_html[] PROGMEM = R"rawliteral(
   <div class="content">
     <div class="card">
       <p class="state red">
-        <input id="red" class="range" type="range" name="ledRange" min="0" max="255" step="1" value="%RED_VALUE%" />
+        <input id="red" class="range" type="range" name="range" min="0" max="255" step="1" value="%RED_VALUE%" />
       </p>
     </div>
     <div class="card">
       <p class="state green">
-        <input id="green" class="range" type="range" name="ledRange" min="0" max="255" step="1" value="%GREEN_VALUE%" />
+        <input id="green" class="range" type="range" name="range" min="0" max="255" step="1" value="%GREEN_VALUE%" />
       </p>
     </div>      
     <div class="card">
       <p class="state blue">
-        <input id="blue" class="range" type="range" name="ledRange" min="0" max="255" step="1" value="%BLUE_VALUE%" />
+        <input id="blue" class="range" type="range" name="range" min="0" max="255" step="1" value="%BLUE_VALUE%" />
       </p>
     </div>
 
@@ -120,7 +120,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         </script>
       </p>
       <p class="state sensor">
-        <input id="sensor" class="range" type="range" name="sensorRange" min="0" max="%SENSOR_LIMIT%" step="1" value="%SENSOR_VALUE%" />
+        <input id="sensor" class="range" type="range" name="range" min="0" max="%SENSOR_LIMIT%" step="1" value="%SENSOR_VALUE%" />
       </p>
     </div>    
     <div class="card">
