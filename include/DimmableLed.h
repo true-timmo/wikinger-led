@@ -41,7 +41,7 @@ unsigned int DimmableLed::getLevel()
 
 void DimmableLed::switchOn()
 {
-    analogWrite(this->pin, map(this->level, 0, 255, 0, 1023));
+    analogWrite(this->pin, map(this->level, 0, 255, 0, 255));
 }
 
 void DimmableLed::switchOff()

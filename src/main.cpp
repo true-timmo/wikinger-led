@@ -53,7 +53,7 @@ String processor(const String& var)
   if (var == "BLUE_VALUE") return String(blueLed.getLevel());
   if (var == "SENSOR_VALUE") return String(sensor.getLevel()); 
   if (var == "DARKNESS_ENABLED") return String(darknessHandler.getLevel());
-  if (var == "SENSOR_LIMIT") return String(128);
+  if (var == "SENSOR_LIMIT") return String(sensor.getMaxThreshold());
 
   return String();
 }

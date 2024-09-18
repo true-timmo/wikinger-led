@@ -8,6 +8,8 @@ class SunSensor: public Dimmable
 {
 private:
     int pin;
+    const int maxThreshold = 255;
+    const unsigned int dimMultiplier = 5;
     unsigned int threshold;
     unsigned int sensitivity;
     bool isDark = false;
@@ -22,6 +24,10 @@ public:
         pinMode(this->pin, INPUT);
     }
     
+    const int getMaxThreshold() {
+        return this->maxThreshold;
+    }
+
     bool setThreshold(int threshold);
     unsigned int getThreshold();
     void dim(int value) override;
@@ -32,7 +38,7 @@ public:
 
 bool SunSensor::setThreshold(int threshold)
 {
-    this->threshold = constrain(threshold, 0, 128);
+    this->threshold = constrain(threshold, 0, this->maxThreshold);
 
     return this->read();
 }
@@ -44,7 +50,7 @@ unsigned int SunSensor::getThreshold()
 
 bool SunSensor::read()
 {
-    const int sensorValue = map(0, 1023, 0, 255, analogRead(this->pin));
+    const int sensorValue = map(0, 1023, 0, this->maxThreshold, analogRead(this->pin));
     const int lowerThreshold = this->threshold - this->sensitivity;
     const int upperThreshold = this->threshold + this->sensitivity;
 
@@ -55,6 +61,8 @@ bool SunSensor::read()
 
 void SunSensor::dim(int level)
 {
+    level = level * this->dimMultiplier;
+
     this->setThreshold(this->getThreshold() + level);
 }
 
