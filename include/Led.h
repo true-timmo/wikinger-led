@@ -7,12 +7,11 @@ class Led
 {    
     protected:
         int pin;
-        unsigned int level;
     public:
         Led(int pin) {
             this->pin = pin;
-            this->level = LOW;
             pinMode(this->pin, OUTPUT);
+            this->switchOff();
         };
 
         virtual void switchOn() {
@@ -23,8 +22,9 @@ class Led
             digitalWrite(this->pin, LOW);
         };
 
-        virtual bool isOn() {
-             return this->level != LOW;
+        virtual bool isOn()
+        {
+             return digitalRead(this->pin) == LOW;
         };
 
         virtual ~Led() {};
