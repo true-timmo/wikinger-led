@@ -15,13 +15,13 @@ private:
     bool currentState = false;
     bool isDark()
     {
-        unsigned int lowerThreshold = this->threshold->getLevel() - this->sensitivity;
-        if (this->sensorValue < lowerThreshold) {
+        unsigned int lowerThreshold = this->threshold->getLevel() < this->sensitivity ? 0 : this->threshold->getLevel() - this->sensitivity;
+        if (this->sensorValue <= lowerThreshold) {
             return this->currentState = true;
         }
 
         unsigned int upperThreshold = this->threshold->getLevel() + this->sensitivity;
-        if (this->sensorValue > upperThreshold)
+        if (this->sensorValue >= upperThreshold)
         {
             return this->currentState = false;
         }
@@ -50,7 +50,7 @@ public:
 
     void setLevel(unsigned int level) override
     {
-        this->sensorValue = map(0, 1023, 0, this->threshold->getUpperLimit(), level);
+        this->sensorValue = map(level, 0, 1023, 0, this->threshold->getUpperLimit());
     }
 
     bool read()

@@ -21,7 +21,7 @@ class DarknessHandler: public Dimmable
             if (this->darknessHandlerEnabled) {
                 this->switchOff();
             }
-        };
+        }
     
     protected:
         bool darknessHandlerEnabled = true;
@@ -49,6 +49,11 @@ class DarknessHandler: public Dimmable
         {
             this->eventHandler = eventHandler;
         };
+
+        String outputSunsetMessage()
+        {
+            return String("Es werde Licht!");
+        }
 
         String outputNightTime()
         {
@@ -78,6 +83,7 @@ class DarknessHandler: public Dimmable
             }
 
             if (isDark && !this->lightsOn) {
+                this->eventHandler->textAll(this->outputSunsetMessage());
                 this->switchOn();
             }
             else if (!isDark && this->lightsOn) {   

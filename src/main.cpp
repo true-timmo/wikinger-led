@@ -31,7 +31,7 @@ IPAddress myIP;
 DimmableLed redLed(D1, "red", 255);
 DimmableLed greenLed(D2, "green", 0);
 DimmableLed blueLed(D3, "blue", 0);
-Threshold threshold("darkness", 255);
+Threshold threshold("threshold", 70, 255);
 SunSensor sensor(A0, "sensor", &threshold, 7);
 
 Encoder encoder(D5, D4);

@@ -12,9 +12,10 @@ class Threshold: public Dimmable
         unsigned int threshold;
 
     public:
-        Threshold(const char* name, unsigned int upperLimit): Dimmable(name)
+        Threshold(const char* name, unsigned int threshold, unsigned int upperLimit): Dimmable(name)
         {
             this->upperLimit = upperLimit;
+            this->threshold = threshold;
         }
 
         unsigned int getUpperLimit()
