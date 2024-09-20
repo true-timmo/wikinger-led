@@ -1,7 +1,7 @@
 #ifndef WebSocketEventHandler_h_
 #define WebSocketEventHandler_h_
 
-#include "Dimmable.h"
+#include "Target.h"
 #include <ESPAsyncWebServer.h>
 #include <EEPROM.h>
 
@@ -10,13 +10,14 @@ class WebSocketEventHandler
     private:
         const unsigned int eepromSize = 2;
         AsyncWebSocket* ws;
-        std::vector<Dimmable*> targets;
+        std::vector<Target*> targets;
         void handleWebSocketMessage(void *arg, uint8_t *data, size_t len);
 
     public:
         WebSocketEventHandler(AsyncWebSocket* ws);
-        void textAll(String text);
-        void addTarget(Dimmable* target);
+        void textAll(const char* target, unsigned int value);
+        void textAll(String log);
+        void addTarget(Target* target);
         void updateTarget(const char* name, int value);
         void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,void *arg, uint8_t *data, size_t len);
 };
@@ -25,7 +26,7 @@ WebSocketEventHandler::WebSocketEventHandler(AsyncWebSocket* ws) {
     this->ws = ws;
 }
 
-void WebSocketEventHandler::addTarget(Dimmable* target)
+void WebSocketEventHandler::addTarget(Target* target)
 {
     this->targets.push_back(target);
 
@@ -49,15 +50,20 @@ void WebSocketEventHandler::updateTarget(const char* name, int value)
             EEPROM.commit();
 
             target->setLevel(value);
-            this->textAll(String(target->getName()) + ":" + String(value));
+            this->textAll(target->getName(), value);
         }
         ++index;
     }
 }
 
-void WebSocketEventHandler::textAll(String text)
+void WebSocketEventHandler::textAll(const char* targetName, unsigned int value)
 {
-    this->ws->textAll(text);
+    this->ws->textAll(String(targetName) + ":" + String(value));
+}
+
+void WebSocketEventHandler::textAll(String log)
+{
+    this->ws->textAll(log);
 }
 
 void WebSocketEventHandler::onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)

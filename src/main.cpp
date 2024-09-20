@@ -31,7 +31,8 @@ IPAddress myIP;
 DimmableLed redLed(D1, "red", 255);
 DimmableLed greenLed(D2, "green", 0);
 DimmableLed blueLed(D3, "blue", 0);
-SunSensor sensor(A0, "sensor", 50, 7);
+Threshold threshold("darkness", 255);
+SunSensor sensor(A0, "sensor", &threshold, 7);
 
 Encoder encoder(D5, D4);
 LimitedDarknessHandler darknessHandler(&eventHandler, 1000*3600*4);
@@ -51,9 +52,10 @@ String processor(const String& var)
   if (var == "RED_VALUE") return String(redLed.getLevel());
   if (var == "GREEN_VALUE") return String(greenLed.getLevel());
   if (var == "BLUE_VALUE") return String(blueLed.getLevel());
-  if (var == "SENSOR_VALUE") return String(sensor.getLevel()); 
+  if (var == "SENSOR_VALUE") return String(sensor.getLevel());
+  if (var == "THRESHOLD_VALUE") return String(threshold.getLevel()); 
   if (var == "DARKNESS_ENABLED") return String(darknessHandler.getLevel());
-  if (var == "SENSOR_LIMIT") return String(sensor.getMaxThreshold());
+  if (var == "THRESHOLD_LIMIT") return String(threshold.getUpperLimit());
 
   return String();
 }
@@ -70,7 +72,7 @@ void setup()
     Serial.printf("Wifi AP connection established. IP: %s \n", myIP.toString().c_str());
   }
 
-  multiTargetEncoder.addDimmable(&sensor);
+  multiTargetEncoder.addDimmable(&threshold);
   multiTargetEncoder.addDimmable(&redLed);
   multiTargetEncoder.addDimmable(&greenLed);
   multiTargetEncoder.addDimmable(&blueLed);
@@ -82,8 +84,9 @@ void setup()
   eventHandler.addTarget(&redLed);
   eventHandler.addTarget(&greenLed);
   eventHandler.addTarget(&blueLed);
-  eventHandler.addTarget(&sensor);
+  eventHandler.addTarget(&threshold);
   eventHandler.addTarget(&darknessHandler);
+  eventHandler.addTarget(&sensor);
 
   initWebSocket();
 
@@ -106,8 +109,12 @@ void loop()
   ws.cleanupClients();
   ledSwitch.handleSwitchTarget();
 
-  long lastEncoderPosition = multiTargetEncoder.setEncoderPosition(encoder.read());
+  multiTargetEncoder.setEncoderPosition(encoder.read());
   darknessHandler.handleDarkness(sensor.read());
+
+  if (ws.getClients().length() > 0) {
+    eventHandler.textAll(sensor.getName(), sensor.getLevel());
+  }
 
   //Serial.print("targetLevel: ");
   //Serial.print(multiTargetEncoder.getTargetLevel());
@@ -116,5 +123,5 @@ void loop()
   //Serial.print(", Target: ");
   //Serial.println(ledSwitch.getTarget());  
 
-  delay(400);
+  delay(500);
 }

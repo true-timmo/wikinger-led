@@ -36,7 +36,7 @@ const char index_html[] PROGMEM = R"rawliteral(
   .card {
     background-color: #F8F7F9;;
     box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);
-    padding:10px 10px 0px;
+    padding:5px;
     margin-bottom:5px;
   }
   .card p{
@@ -66,12 +66,17 @@ const char index_html[] PROGMEM = R"rawliteral(
      transform: translateY(2px);
    }
    .state {
-     font-size: 2rem;
+     font-size: 1.5rem;
      color:#724944;
      font-weight: bold;
    }
+   .state input, .state label {
+     height: 2rem;
+     vertical-align: middle;
+   }
    .state input.range {
      width: 90%%;
+     margin: auto;
    }
 
    .state.red {
@@ -83,7 +88,7 @@ const char index_html[] PROGMEM = R"rawliteral(
    .state.blue {
      background-color:blue;
    }
-   .state.sensor {
+   .state.threshold {
      background-color:grey;
    }   
   </style>
@@ -111,7 +116,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     <div class="card">
       <p class="state sensorEnabled">
-        <span>Darkness handler enabled: </span><input type="checkbox" name="darkness" id="darkness" value="1"/>
+        <label for="darkness">Darkness handler enabled:</label><input type="checkbox" name="darkness" id="darkness" value="1"/>
         <script>
           let darknessEnabled = %DARKNESS_ENABLED%;
           if (darknessEnabled) {
@@ -119,8 +124,11 @@ const char index_html[] PROGMEM = R"rawliteral(
           }
         </script>
       </p>
+      <p class="state threshold">
+        <input id="threshold" class="range" type="range" name="range" min="0" max="%THRESHOLD_LIMIT%" step="1" value="%THRESHOLD_VALUE%" />
+      </p>
       <p class="state sensor">
-        <input id="sensor" class="range" type="range" name="range" min="0" max="%SENSOR_LIMIT%" step="1" value="%SENSOR_VALUE%" />
+        <label for="sensor">Current level:</label><input name="sensor" id="sensor" type="text" value="%SENSOR_VALUE%" disabled />
       </p>
     </div>    
     <div class="card">
@@ -147,10 +155,10 @@ const char index_html[] PROGMEM = R"rawliteral(
   }
   function onMessage(event) {
   	const parts = event.data.split(":");
-    const color = parts[0];
+    const target = parts[0];
 
     if (parts.length == 2) {
-      document.getElementById(color).value = parts[1];
+      document.getElementById(target).value = parts[1];
     }
 
     document.getElementById('log').innerHTML = event.data;

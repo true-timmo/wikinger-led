@@ -2,78 +2,62 @@
 #define SunSensor_h_
 
 #include <Arduino.h>
-#include "Dimmable.h"
+#include "Target.h"
+#include "Threshold.h"
 
-class SunSensor: public Dimmable
+class SunSensor: public Target
 {
 private:
     int pin;
-    const int maxThreshold = 255;
-    const unsigned int dimMultiplier = 5;
-    unsigned int threshold;
+    Threshold* threshold;
+    unsigned int sensorValue;
     unsigned int sensitivity;
-    bool isDark = false;
+    bool currentState = false;
+    bool isDark()
+    {
+        unsigned int lowerThreshold = this->threshold->getLevel() - this->sensitivity;
+        if (this->sensorValue < lowerThreshold) {
+            return this->currentState = true;
+        }
+
+        unsigned int upperThreshold = this->threshold->getLevel() + this->sensitivity;
+        if (this->sensorValue > upperThreshold)
+        {
+            return this->currentState = false;
+        }
+
+        return this->currentState;
+    }
     
 public:
-    SunSensor(int pin, const char* name, unsigned int threshold, unsigned int sensitivity): Dimmable(name)
-    {
+    SunSensor(
+        int pin,
+        const char* name,
+        Threshold* threshold,
+        unsigned int sensitivity
+    ): Target(name) {
         this->pin = pin;
         this->threshold = threshold;
         this->sensitivity = sensitivity;
 
         pinMode(this->pin, INPUT);
     }
-    
-    const int getMaxThreshold() {
-        return this->maxThreshold;
+
+    unsigned int getLevel() override
+    {
+        return this->sensorValue;
     }
 
-    bool setThreshold(int threshold);
-    unsigned int getThreshold();
-    void dim(int value) override;
-    unsigned int getLevel() override;
-    void setLevel(unsigned int level) override;
-    bool read();
+    void setLevel(unsigned int level) override
+    {
+        this->sensorValue = map(0, 1023, 0, this->threshold->getUpperLimit(), level);
+    }
+
+    bool read()
+    {
+        this->setLevel(analogRead(this->pin));
+        return this->isDark();
+    }
 };
-
-bool SunSensor::setThreshold(int threshold)
-{
-    this->threshold = constrain(threshold, 0, this->maxThreshold);
-
-    return this->read();
-}
-
-unsigned int SunSensor::getThreshold()
-{
-    return this->threshold;
-}
-
-bool SunSensor::read()
-{
-    const int sensorValue = map(0, 1023, 0, this->maxThreshold, analogRead(this->pin));
-    const int lowerThreshold = this->threshold - this->sensitivity;
-    const int upperThreshold = this->threshold + this->sensitivity;
-
-    this->isDark = (sensorValue < lowerThreshold) ? true : (sensorValue > upperThreshold) ? false : this->isDark;
-
-    return this->isDark;
-}
-
-void SunSensor::dim(int level)
-{
-    level = level * this->dimMultiplier;
-
-    this->setThreshold(this->getThreshold() + level);
-}
-
-unsigned int SunSensor::getLevel()
-{
-    return this->threshold;
-}
-
-void SunSensor::setLevel(unsigned int level)
-{
-    this->setThreshold(level);
-}
 
 #endif  // SunSensor_h_

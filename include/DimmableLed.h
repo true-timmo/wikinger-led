@@ -6,11 +6,14 @@
 #include "Led.h"
 
 class DimmableLed: public Dimmable, public Led
-{    
-public:
-    DimmableLed(int pin, const char* name, unsigned int initialLevel = 0) : Dimmable(name), Led(pin) {
-        this->setLevel(initialLevel);
-    };
+{
+    private:
+        unsigned int level;
+        
+    public:
+        DimmableLed(int pin, const char* name, unsigned int initialLevel = 0) : Dimmable(name), Led(pin) {
+            this->setLevel(initialLevel);
+        };
 
     void dim(int offset) override;
     unsigned int getLevel() override;

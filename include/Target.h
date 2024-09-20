@@ -8,9 +8,6 @@ class Target
     private:
         const char* name;
 
-    protected:
-        unsigned int level;
-
     public:
         Target(const char* name) {
             this->name = name;

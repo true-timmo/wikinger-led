@@ -24,16 +24,16 @@ class MultiTargetEncoder
         };
         void addDimmable(Dimmable* dimmable);
         unsigned int getTargetLevel();
-        long setEncoderPosition(long encoderPosition);
+        void setEncoderPosition(long encoderPosition);
 };
 
-long MultiTargetEncoder::setEncoderPosition(long encoderPosition)
+void MultiTargetEncoder::setEncoderPosition(long encoderPosition)
 { 
     const unsigned long timeout = 10000;  // 10 Sekunden Timeout
     
     if (encoderPosition == this->encoderPosition) {
         if (this->lastInputTime == 0) {
-            return encoderPosition;
+            return;
         }
 
         if (millis() - this->lastInputTime > timeout) {
@@ -41,19 +41,17 @@ long MultiTargetEncoder::setEncoderPosition(long encoderPosition)
             this->targetSwitcher->reset();
         }
 
-        return encoderPosition;
+        return;
     }
 
+    const int direction = encoderPosition > this->encoderPosition ? 1 : -1;
+    Dimmable* target = this->dimmableTargets[this->targetSwitcher->getTarget()];
 
-  const int direction = encoderPosition > this->encoderPosition ? 1 : -1;
-  Dimmable* target = this->dimmableTargets[this->targetSwitcher->getTarget()];
+    target->dim(direction);
+    this->eventHandler->textAll(String(target->getName()) + ":" + String(target->getLevel()));
+    this->encoderPosition = encoderPosition;
+    this->lastInputTime = millis();
 
-  target->dim(direction);
-  this->eventHandler->textAll(String(target->getName()) + ":" + String(target->getLevel()));
-  this->encoderPosition = encoderPosition;
-  this->lastInputTime = millis();
-
-  return encoderPosition;
 }
 
 void MultiTargetEncoder::addDimmable(Dimmable* dimmable) 
