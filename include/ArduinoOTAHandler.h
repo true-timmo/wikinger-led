@@ -10,6 +10,7 @@ class ArduinoOTAHandler: public Target
 {
     private:
         static ArduinoOTAHandler* instance;  // Statische Instanzreferenz
+        Led* statusLed;
         WebSocketEventHandler* eventHandler;
 
         void wsTextAll(String text)
@@ -21,9 +22,10 @@ class ArduinoOTAHandler: public Target
         bool otaHandlerEnabled = false;
 
     public:
-        ArduinoOTAHandler(const char* name, WebSocketEventHandler* eventHandler): Target(name)
+        ArduinoOTAHandler(const char* name, WebSocketEventHandler* eventHandler, Led* statusLed): Target(name)
         {
             this->eventHandler = eventHandler;
+            this->statusLed = statusLed;
 
             // Setze den statischen Zeiger auf die aktuelle Instanz
             instance = this;
@@ -35,7 +37,13 @@ class ArduinoOTAHandler: public Target
 
             ArduinoOTA.onStart([]()
             {
-                instance->wsTextAll("Start");
+                String type;
+                if (ArduinoOTA.getCommand() == U_FLASH) {
+                    type = "sketch";
+                } else { // U_SPIFFS
+                    type = "filesystem";
+                }
+                instance->wsTextAll("Start OTA update: " + type);
             });
 
             ArduinoOTA.onEnd([]()
@@ -69,9 +77,9 @@ class ArduinoOTAHandler: public Target
             }
 
             ArduinoOTA.handle();
-            digitalWrite(LED_BUILTIN, LOW);
+            this->statusLed->switchOff();
             delay(1000);
-            digitalWrite(LED_BUILTIN, HIGH);
+            this->statusLed->switchOn();
             delay(1000);
         }
 

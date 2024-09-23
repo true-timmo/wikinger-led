@@ -38,7 +38,7 @@ SunSensor sensor(A0, "sensor", &threshold, 7);
 Encoder encoder(D5, D4);
 LimitedDarknessHandler darknessHandler(&eventHandler, 1000*3600*4);
 TargetSwitcher ledSwitch(D6, &darknessHandler);
-ArduinoOTAHandler otaHandler("otahandler", &eventHandler);
+ArduinoOTAHandler otaHandler("otahandler", &eventHandler, &redLed);
 MultiTargetEncoder multiTargetEncoder(&ledSwitch, &eventHandler);
 
 void initWebSocket() {
@@ -75,6 +75,8 @@ void setup()
     myIP = WiFi.softAPIP();
     Serial.printf("Wifi AP connection established. IP: %s \n", myIP.toString().c_str());
   }
+
+  otaHandler.setup();
 
   multiTargetEncoder.addDimmable(&threshold);
   multiTargetEncoder.addDimmable(&redLed);
@@ -113,7 +115,8 @@ void loop()
 {
   ws.cleanupClients();
   ledSwitch.handleSwitchTarget();
-
+  otaHandler.handle();
+  
   multiTargetEncoder.setEncoderPosition(encoder.read());
   darknessHandler.handleDarkness(sensor.read());
 
