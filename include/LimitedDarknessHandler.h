@@ -18,6 +18,10 @@ public:
     
     void handleDarkness(bool isDark)
     {
+        if (!isDark && this->sunsetTimestamp < 0) {
+            this->sunsetTimestamp = 0;
+        }
+
         if (isDark && millis() > (this->sunsetTimestamp + this->lightTimelimit)) {
             isDark = false;
         }
