@@ -13,6 +13,7 @@ class DimmableLed: public Dimmable, public Led
     public:
         DimmableLed(int pin, const char* name, unsigned int initialLevel = 0) : Dimmable(name), Led(pin) {
             this->setLevel(initialLevel);
+            this->setPersistable(true);
         };
 
     void dim(int offset) override;

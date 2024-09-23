@@ -14,6 +14,7 @@ class Threshold: public Dimmable
     public:
         Threshold(const char* name, unsigned int threshold, unsigned int upperLimit): Dimmable(name)
         {
+            this->setPersistable(true);
             this->upperLimit = upperLimit;
             this->threshold = threshold;
         }

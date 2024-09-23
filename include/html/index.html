@@ -129,7 +129,18 @@ const char index_html[] PROGMEM = R"rawliteral(
         <label for="sensor">Current level:</label>
         <input id="sensor" class="range" type="range" name="range" min="0" max="255" step="1" value="%SENSOR_VALUE%" disabled/>
       </p>
-    </div>    
+    </div> 
+    <div class="card">
+      <p class="state sensorEnabled"></p>
+        <label for="otahandler">OTA update enabled:</label><input type="checkbox" name="otahandler" id="otahandler" value="1"/>
+        <script>
+          let otaUpdateEnabled = %OTA_UPDATE_ENABLED%;
+          if (otaUpdateEnabled) {
+            document.getElementById('otahandler').checked = "checked";
+          }
+        </script>
+      </p>
+    </div>       
     <div class="card">
       <p class="state" id="log"><!-- log here --></p>
     </div>
@@ -172,6 +183,9 @@ const char index_html[] PROGMEM = R"rawliteral(
   function initCheckbox() {
       const checkbox = document.getElementById('darkness');
       checkbox.addEventListener('change', changeCheckbox);
+
+      const otaUpdateCheckbox = document.getElementById('otahandler');
+      otaUpdateCheckbox.addEventListener('change', changeCheckbox);      
   }
   function changeRange(event) {
     websocket.send(event.target.id + ':' + event.target.value);

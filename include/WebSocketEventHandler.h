@@ -32,7 +32,7 @@ void WebSocketEventHandler::addTarget(Target* target)
 
     const int lastIndex = this->targets.size() - 1;
     const unsigned int eepromIndex = this->eepromSize * lastIndex;
-    if (EEPROM.read(eepromIndex) == 1) {
+    if (target->isPersistable() && EEPROM.read(eepromIndex) == 1) {
              target->setLevel(EEPROM.read(eepromIndex + 1));
     }
 }
@@ -43,11 +43,12 @@ void WebSocketEventHandler::updateTarget(const char* name, int value)
     for (const auto& target : this->targets) {
         if (strcmp(target->getName(), name) == 0)
         {
-            //Too lazy to implement a class, so let's hack this for now
-            const unsigned int eepromIndex = this->eepromSize * index;
-            EEPROM.write(eepromIndex, 1);
-            EEPROM.write(eepromIndex + 1, value);
-            EEPROM.commit();
+            if (target->isPersistable()) {
+              const unsigned int eepromIndex = this->eepromSize * index;
+              EEPROM.write(eepromIndex, 1);
+              EEPROM.write(eepromIndex + 1, value);
+              EEPROM.commit();
+            }
 
             target->setLevel(value);
             this->textAll(target->getName(), value);

@@ -11,6 +11,7 @@
 #include "MultiTargetEncoder.h"
 #include "LimitedDarknessHandler.h"
 #include "WebSocketEventHandler.h"
+#include "ArduinoOTAHandler.h"
 
 #include "html/index.html"
 
@@ -37,6 +38,7 @@ SunSensor sensor(A0, "sensor", &threshold, 7);
 Encoder encoder(D5, D4);
 LimitedDarknessHandler darknessHandler(&eventHandler, 1000*3600*4);
 TargetSwitcher ledSwitch(D6, &darknessHandler);
+ArduinoOTAHandler otaHandler("otahandler", &eventHandler);
 MultiTargetEncoder multiTargetEncoder(&ledSwitch, &eventHandler);
 
 void initWebSocket() {
@@ -56,6 +58,8 @@ String processor(const String& var)
   if (var == "THRESHOLD_VALUE") return String(threshold.getLevel()); 
   if (var == "DARKNESS_ENABLED") return String(darknessHandler.getLevel());
   if (var == "THRESHOLD_LIMIT") return String(threshold.getUpperLimit());
+  if (var == "THRESHOLD_LIMIT") return String(threshold.getUpperLimit());
+  if (var == "OTA_UPDATE_ENABLED") return String(otaHandler.getLevel());
 
   return String();
 }
@@ -87,6 +91,7 @@ void setup()
   eventHandler.addTarget(&threshold);
   eventHandler.addTarget(&darknessHandler);
   eventHandler.addTarget(&sensor);
+  eventHandler.addTarget(&otaHandler);
 
   initWebSocket();
 

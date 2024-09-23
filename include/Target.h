@@ -7,10 +7,22 @@ class Target
 {
     private:
         const char* name;
+        bool persistable = false;
+
+    protected:
+        void setPersistable(bool persistable)
+        {
+            this->persistable = persistable;
+        }
 
     public:
         Target(const char* name) {
             this->name = name;
+        }
+
+        bool isPersistable()
+        {
+            return this->persistable;
         }
 
         virtual const char* getName() 
