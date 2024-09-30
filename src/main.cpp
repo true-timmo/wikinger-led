@@ -2,6 +2,7 @@
 #include <Encoder.h>
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
+#include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
 
 #include "DimmableLed.h"
@@ -20,25 +21,40 @@
 #define APPSK  "sbu421974"
 #endif
 
+#define LED_STATUS D4
+#define LED_RED D1
+#define LED_GREEN D2
+#define LED_BLUE D3
+#define ENCODER_HIGH D5
+#define ENCODER_LOW D6
+#define ENCODER_SWITCH D7
+#define SENSOR_ANALOG A0
+
+
 const char* ap_ssid = APSSID;
 const char* ap_pwd = APPSK;
 
-// Create AsyncWebServer object on port 80
+IPAddress local_IP(192, 168, 4, 1);
+IPAddress gateway(192, 168, 4, 1);
+IPAddress subnet(255, 255, 255, 0);
+
+DNSServer dnsServer;
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 WebSocketEventHandler eventHandler(&ws);
 IPAddress myIP;
 
-DimmableLed redLed(D1, "red", 255);
-DimmableLed greenLed(D2, "green", 0);
-DimmableLed blueLed(D3, "blue", 0);
+Led statusLed(LED_STATUS);
+DimmableLed redLed(LED_RED, "red", 255);
+DimmableLed greenLed(LED_GREEN, "green", 0);
+DimmableLed blueLed(LED_BLUE, "blue", 0);
 Threshold threshold("threshold", 70, 255);
-SunSensor sensor(A0, "sensor", &threshold, 7);
+SunSensor sensor(SENSOR_ANALOG, "sensor", &threshold, 7);
 
-Encoder encoder(D5, D4);
+Encoder encoder(ENCODER_LOW, ENCODER_HIGH);
 LimitedDarknessHandler darknessHandler(&eventHandler, 1000*3600*4);
-TargetSwitcher ledSwitch(D6, &darknessHandler);
-ArduinoOTAHandler otaHandler("otahandler", &eventHandler, &redLed);
+TargetSwitcher ledSwitch(ENCODER_SWITCH, &darknessHandler);
+ArduinoOTAHandler otaHandler("otahandler", &eventHandler, &statusLed);
 MultiTargetEncoder multiTargetEncoder(&ledSwitch, &eventHandler);
 
 void initWebSocket() {
@@ -70,11 +86,14 @@ void setup()
   EEPROM.begin(32);
   delay(100);
 
+  WiFi.softAPConfig(local_IP, gateway, subnet);
   boolean result = WiFi.softAP(ap_ssid, ap_pwd);
   if (result == true) {
     myIP = WiFi.softAPIP();
     Serial.printf("Wifi AP connection established. IP: %s \n", myIP.toString().c_str());
   }
+
+  dnsServer.start(53, "*", local_IP);
 
   otaHandler.setup();
 
@@ -102,34 +121,22 @@ void setup()
     request->send_P(200, "text/html", index_html, processor);
   });
 
-  // Konfiguriere die Captive-Portal-Webseite
-  server.onNotFound([](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", index_html, processor);
-  });
-
-  // Start server
   server.begin();
 }
 
 void loop()
 {
+  dnsServer.processNextRequest();
   ws.cleanupClients();
+  multiTargetEncoder.setEncoderPosition(encoder.read());
+
+  darknessHandler.handleDarkness(sensor.read());
   ledSwitch.handleSwitchTarget();
   otaHandler.handle();
-  
-  multiTargetEncoder.setEncoderPosition(encoder.read());
-  darknessHandler.handleDarkness(sensor.read());
 
   if (ws.getClients().length() > 0) {
     eventHandler.textAll(sensor.getName(), sensor.getLevel());
   }
-
-  //Serial.print("targetLevel: ");
-  //Serial.print(multiTargetEncoder.getTargetLevel());
-  //Serial.print(", encoderPosition: ");
-  //Serial.println(lastEncoderPosition);  
-  //Serial.print(", Target: ");
-  //Serial.println(ledSwitch.getTarget());  
 
   delay(500);
 }

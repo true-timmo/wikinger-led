@@ -33,29 +33,21 @@ class ArduinoOTAHandler: public Target
 
         void setup()
         {
-            pinMode(LED_BUILTIN, OUTPUT);
-
             ArduinoOTA.onStart([]()
             {
-                String type;
-                if (ArduinoOTA.getCommand() == U_FLASH) {
-                    type = "sketch";
-                } else { // U_SPIFFS
-                    type = "filesystem";
-                }
-                instance->wsTextAll("Start OTA update: " + type);
+                instance->wsTextAll("Start OTA update...");
+                delay(100);
             });
 
             ArduinoOTA.onEnd([]()
             {
-                instance->wsTextAll("End");
-                ESP.restart();
+                instance->wsTextAll("...OTA update done");
             });
 
             ArduinoOTA.onProgress([](unsigned int progress, unsigned int total)
             {
-                float currentProgress = progress / (total / 100);
-                instance->wsTextAll("Progress: " + String(currentProgress) + "%");
+                instance->wsTextAll("uploading ... " + String(progress / (total / 100)) + "%");
+                delay(50);
             });
 
             ArduinoOTA.onError([](ota_error_t error)
@@ -77,10 +69,10 @@ class ArduinoOTAHandler: public Target
             }
 
             ArduinoOTA.handle();
-            this->statusLed->switchOff();
-            delay(1000);
             this->statusLed->switchOn();
-            delay(1000);
+            delay(500);
+            this->statusLed->switchOff();
+            delay(500);
         }
 
         unsigned int getLevel() override
@@ -93,8 +85,12 @@ class ArduinoOTAHandler: public Target
             this->otaHandlerEnabled = level > 0;
 
             if (this->otaHandlerEnabled) {
-                ArduinoOTA.begin();
+                instance->wsTextAll("OTA waiting for connection...");
+                return ArduinoOTA.begin();
             }
+
+            instance->wsTextAll(" ");
+            ArduinoOTA.end();
         }
 };
 

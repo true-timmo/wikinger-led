@@ -15,11 +15,11 @@ class Led
         };
 
         virtual void switchOn() {
-            digitalWrite(this->pin, HIGH);
+            digitalWrite(this->pin, LOW);
         };
 
         virtual void switchOff() {
-            digitalWrite(this->pin, LOW);
+            digitalWrite(this->pin, HIGH);
         };
 
         virtual bool isOn()
