@@ -135,6 +135,7 @@ void loop()
   otaHandler.handle();
 
   if (ws.getClients().length() > 0) {
+    Serial.printf("Current sensor status: %d \n", sensor.getLevel());
     eventHandler.textAll(sensor.getName(), sensor.getLevel());
   }
 

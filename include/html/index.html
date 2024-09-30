@@ -65,6 +65,11 @@ const char index_html[] PROGMEM = R"rawliteral(
      box-shadow: 2 2px #CDCDCD;
      transform: translateY(2px);
    }
+   #colorPicker {
+     margin: auto;
+     width: 80%%;
+     height: 100px;
+   }
    .state {
      font-size: 1.5rem;
      color:#724944;
@@ -78,36 +83,19 @@ const char index_html[] PROGMEM = R"rawliteral(
      width: 90%%;
      margin: auto;
    }
-
-   .state.red {
-     background-color:red;
-   }
-   .state.green {
-     background-color:green;
-   }
-   .state.blue {
-     background-color:blue;
-   }
   </style>
 </head>
 <body>
   <div class="topnav">
     <h1>Wikinger LED Portal</h1>
   </div>
-  <div class="content">
+  <div class="content">     
     <div class="card">
-      <p class="state red">
-        <input id="red" class="range" type="range" name="range" min="0" max="255" step="1" value="%RED_VALUE%" />
-      </p>
-    </div>
-    <div class="card">
-      <p class="state green">
-        <input id="green" class="range" type="range" name="range" min="0" max="255" step="1" value="%GREEN_VALUE%" />
-      </p>
-    </div>      
-    <div class="card">
-      <p class="state blue">
-        <input id="blue" class="range" type="range" name="range" min="0" max="255" step="1" value="%BLUE_VALUE%" />
+      <p class="state ">
+        <input id="colorPicker" type="color" value="#000000"/>
+        <input id="red" type="hidden" name="range" min="0" max="255" step="1" value="%RED_VALUE%" />
+        <input id="green" type="hidden" name="range" min="0" max="255" step="1" value="%GREEN_VALUE%" />
+        <input id="blue" type="hidden" name="range" min="0" max="255" step="1" value="%BLUE_VALUE%" />
       </p>
     </div>
 
@@ -122,11 +110,11 @@ const char index_html[] PROGMEM = R"rawliteral(
         </script>
       </p>
       <p class="state threshold">
-        <label for="threshold">Threshold:</label>
+        <label for="threshold">Darkness threshold:</label>
         <input id="threshold" class="range" type="range" name="range" min="0" max="%THRESHOLD_LIMIT%" step="1" value="%THRESHOLD_VALUE%" />
       </p>
       <p class="state sensor">
-        <label for="sensor">Current level:</label>
+        <label for="sensor">Current brightness:</label>
         <input id="sensor" class="range" type="range" name="range" min="0" max="255" step="1" value="%SENSOR_VALUE%" disabled/>
       </p>
     </div> 
@@ -149,6 +137,24 @@ const char index_html[] PROGMEM = R"rawliteral(
   var gateway = `ws://${window.location.hostname}/ws`;
   var websocket;
   window.addEventListener('load', onLoad);
+  function hexToRGB(hex) {
+    hex = hex.replace(/^#/, '');
+
+    let r = parseInt(hex.slice(0, 2), 16);
+    let g = parseInt(hex.slice(2, 4), 16);
+    let b = parseInt(hex.slice(4, 6), 16);
+
+    return { r: r, g: g, b: b };
+  }
+
+  function RGBToHex(r, g, b) {
+    let hexR = r.toString(16).padStart(2, '0');
+    let hexG = g.toString(16).padStart(2, '0');
+    let hexB = b.toString(16).padStart(2, '0');
+
+    return `#${hexR}${hexG}${hexB}`;
+}
+
   function initWebSocket() {
     console.log('Trying to open a WebSocket connection...');
     websocket = new WebSocket(gateway);
@@ -168,10 +174,40 @@ const char index_html[] PROGMEM = R"rawliteral(
     const target = parts[0];
 
     if (parts.length == 2) {
-      document.getElementById(target).value = parts[1];
+      let element = document.getElementById(target);
+      if (element.type == 'checkbox') {
+        element.checked = parts[1] > 0 ? 'checked' : '';
+      } else {
+        element.value = parts[1];
+      }
+
+      if (['red', 'green', 'blue'].includes(target)) {
+        updateColorPicker();
+      }
     } else {
       document.getElementById('log').innerHTML = event.data;
     }
+  }
+  function initColorPicker() {
+    document.getElementById('colorPicker').addEventListener('change', changeColorPicker);
+    updateColorPicker();
+  }
+  
+  function updateColorPicker() {
+    let red = parseInt(document.getElementById('red').value, 10);
+    let green = parseInt(document.getElementById('green').value, 10);
+    let blue = parseInt(document.getElementById('blue').value, 10);
+    const hex = RGBToHex(red, green, blue);
+
+    document.getElementById('colorPicker').value = hex;
+  }
+
+  function changeColorPicker(event) {
+    const { r: red, g: green, b: blue } = hexToRGB(event.target.value);
+
+    websocket.send('red:' + red);
+    websocket.send('green:' + green);
+    websocket.send('blue:' + blue);
   }
   function initRange() {
       const selects = document.getElementsByName('range');
@@ -196,6 +232,7 @@ const char index_html[] PROGMEM = R"rawliteral(
   }    
   function onLoad(event) {
     initWebSocket();
+    initColorPicker();
     initRange();
     initCheckbox();
   }
