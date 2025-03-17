@@ -128,7 +128,10 @@ const char index_html[] PROGMEM = R"rawliteral(
           }
         </script>
       </p>
-    </div>       
+    </div>     
+    <div class="card">
+      <p class="state" id="temp">%TEMP_VALUE%</p>
+    </div>  
     <div class="card">
       <p class="state" id="log"><!-- log here --></p>
     </div>
@@ -177,7 +180,10 @@ const char index_html[] PROGMEM = R"rawliteral(
       let element = document.getElementById(target);
       if (element.type == 'checkbox') {
         element.checked = parts[1] > 0 ? 'checked' : '';
-      } else {
+      } else if (element.tagName == 'p') {
+        element.innerHTML = parts[1];
+      }
+      else {
         element.value = parts[1];
       }
 

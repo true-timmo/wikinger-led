@@ -1,13 +1,15 @@
 #include <Arduino.h>
 #include <Encoder.h>
-#include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>
+#include <WiFi.h>
+#include <AsyncTCP.h>
 #include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
+#include <map>
 
 #include "DimmableLed.h"
 #include "Dimmable.h"
 #include "SunSensor.h"
+#include "TempSensor.h"
 #include "TargetSwitcher.h"
 #include "MultiTargetEncoder.h"
 #include "LimitedDarknessHandler.h"
@@ -21,14 +23,15 @@
 #define APPSK  "sbu421974"
 #endif
 
-#define LED_STATUS D4
-#define LED_RED D1
-#define LED_GREEN D2
-#define LED_BLUE D3
-#define ENCODER_HIGH D5
-#define ENCODER_LOW D6
-#define ENCODER_SWITCH D7
-#define SENSOR_ANALOG A0
+#define LED_STATUS 13
+#define LED_RED 25
+#define LED_GREEN 26
+#define LED_BLUE 27
+#define ENCODER_HIGH 32
+#define ENCODER_LOW 33
+#define ENCODER_SWITCH 13
+#define SENSOR_TEMP 35
+#define SENSOR_ANALOG 34
 
 
 const char* ap_ssid = APSSID;
@@ -50,6 +53,7 @@ DimmableLed greenLed(LED_GREEN, "green", 0);
 DimmableLed blueLed(LED_BLUE, "blue", 0);
 Threshold threshold("threshold", 70, 255);
 SunSensor sensor(SENSOR_ANALOG, "sensor", &threshold, 7);
+TempSensor temp(SENSOR_TEMP, "temp");
 
 Encoder encoder(ENCODER_LOW, ENCODER_HIGH);
 LimitedDarknessHandler darknessHandler(&eventHandler, 1000*3600*4);
@@ -67,15 +71,23 @@ void initWebSocket() {
 
 String processor(const String& var)
 {
-  if (var == "RED_VALUE") return String(redLed.getLevel());
-  if (var == "GREEN_VALUE") return String(greenLed.getLevel());
-  if (var == "BLUE_VALUE") return String(blueLed.getLevel());
-  if (var == "SENSOR_VALUE") return String(sensor.getLevel());
-  if (var == "THRESHOLD_VALUE") return String(threshold.getLevel()); 
-  if (var == "DARKNESS_ENABLED") return String(darknessHandler.getLevel());
-  if (var == "THRESHOLD_LIMIT") return String(threshold.getUpperLimit());
-  if (var == "THRESHOLD_LIMIT") return String(threshold.getUpperLimit());
-  if (var == "OTA_UPDATE_ENABLED") return String(otaHandler.getLevel());
+  static const std::map<String, std::function<String()>> lookup = {
+    {"RED_VALUE", []() { return String(redLed.getLevel()); }},
+    {"GREEN_VALUE", []() { return String(greenLed.getLevel()); }},
+    {"BLUE_VALUE", []() { return String(blueLed.getLevel()); }},
+    {"SENSOR_VALUE", []() { return String(sensor.getLevel()); }},
+    {"TEMP_VALUE", []() { return String(temp.getTemperature()); }},
+    {"HUMID_VALUE", []() { return String(temp.getHumidity()); }},
+    {"THRESHOLD_VALUE", []() { return String(threshold.getLevel()); }},
+    {"DARKNESS_ENABLED", []() { return String(darknessHandler.getLevel()); }},
+    {"THRESHOLD_LIMIT", []() { return String(threshold.getUpperLimit()); }},
+    {"OTA_UPDATE_ENABLED", []() { return String(otaHandler.getLevel()); }}
+  };
+
+  auto it = lookup.find(var);
+  if (it != lookup.end()) {
+      return it->second(); // Call the associated function
+  }
 
   return String();
 }
@@ -112,6 +124,7 @@ void setup()
   eventHandler.addTarget(&threshold);
   eventHandler.addTarget(&darknessHandler);
   eventHandler.addTarget(&sensor);
+  eventHandler.addTarget(&temp);
   eventHandler.addTarget(&otaHandler);
 
   initWebSocket();
@@ -137,6 +150,7 @@ void loop()
   if (ws.getClients().length() > 0) {
     Serial.printf("Current sensor status: %d \n", sensor.getLevel());
     eventHandler.textAll(sensor.getName(), sensor.getLevel());
+    eventHandler.textAll(temp.getName(), temp.getTemperature());
   }
 
   delay(500);
