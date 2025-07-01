@@ -12,11 +12,11 @@ private:
     unsigned long lightTimelimit = 0;
     
 public:
-    LimitedDarknessHandler(WebSocketEventHandler* eventHandler, unsigned long lightTimelimit = 0): DarknessHandler(eventHandler) {
+    LimitedDarknessHandler(unsigned long lightTimelimit = 0): DarknessHandler() {
         this->lightTimelimit = lightTimelimit;
     };
     
-    void handleDarkness(bool isDark)
+    bool handleDarkness(bool isDark)
     {
         if (!isDark && this->sunsetTimestamp < 0) {
             this->sunsetTimestamp = 0;
@@ -26,7 +26,7 @@ public:
             isDark = false;
         }
         
-        DarknessHandler::handleDarkness(isDark);
+        return DarknessHandler::handleDarkness(isDark);
     };
 };
 

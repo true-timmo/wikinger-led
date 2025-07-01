@@ -24,13 +24,16 @@ public:
     {
         this->pin = pin;
         this->darknessHandler = darknessHandler;
-        pinMode(this->pin, INPUT);
 
         // Setze den statischen Zeiger auf die aktuelle Instanz
         instance = this;
-
-        attachInterrupt(digitalPinToInterrupt(this->pin), TargetSwitcher::switchTarget, RISING);
     };
+
+    void init()
+    {
+        pinMode(this->pin, INPUT);
+        attachInterrupt(digitalPinToInterrupt(this->pin), TargetSwitcher::switchTarget, RISING);
+    }
 
     void handleSwitchTarget();  // Normale Instanzfunktion, die von der ISR aufgerufen wird
     void setTargetCount(unsigned int targetCount);
@@ -52,9 +55,9 @@ void IRAM_ATTR TargetSwitcher::switchTarget()
 
 void TargetSwitcher::handleSwitchTarget()
 {
-    noInterrupts();
+    //noInterrupts();
     bool pressed = this->buttonPressed;
-    interrupts();
+    //interrupts();
 
     if (!pressed) {
         return;

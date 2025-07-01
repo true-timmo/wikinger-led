@@ -9,7 +9,6 @@
 class DarknessHandler: public Dimmable
 {
     private:
-        WebSocketEventHandler* eventHandler;
         std::vector<Led*> leds;
         bool lightsOn = false;
         
@@ -45,10 +44,8 @@ class DarknessHandler: public Dimmable
         };    
 
     public:
-        DarknessHandler(WebSocketEventHandler* eventHandler, const char* name = "darkness"): Dimmable(name)
-        {
-            this->eventHandler = eventHandler;
-        };
+        DarknessHandler(const char* name = "darkness"): Dimmable(name)
+        {};
 
         String outputSunsetMessage()
         {
@@ -76,20 +73,20 @@ class DarknessHandler: public Dimmable
             return formattedTime;
         };
 
-        virtual void handleDarkness(bool isDark)
+        virtual bool handleDarkness(bool isDark)
         {
             if (!this->darknessHandlerEnabled) {
-                return;
+                return true;
             }
 
             if (isDark && !this->lightsOn) {
-                this->eventHandler->textAll(this->outputSunsetMessage());
                 this->switchOn();
             }
             else if (!isDark && this->lightsOn) {   
-                this->eventHandler->textAll(this->outputNightTime());
                 this->switchOff();
             }
+
+            return this->lightsOn;
         };
         
         void addLed(Led* led);
