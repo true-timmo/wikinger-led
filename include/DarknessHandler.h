@@ -36,8 +36,11 @@ class DarknessHandler: public Dimmable
 
         void switchOn()
         {
-            this->sunsetTimestamp = millis();
-            this->lightsOn = true;
+            if (!this->lightsOn) {
+                this->sunsetTimestamp = millis();
+                this->lightsOn = true;
+            }
+           
             for (auto& led : this->leds) {
                 led->switchOn();
             }
@@ -79,7 +82,7 @@ class DarknessHandler: public Dimmable
                 return true;
             }
 
-            if (isDark && !this->lightsOn) {
+            if (isDark) {
                 this->switchOn();
             }
             else if (!isDark && this->lightsOn) {   
