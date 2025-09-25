@@ -28,9 +28,9 @@
 CRGB leds[NUM_LEDS];
 Led statusLed(LED_STATUS);
 
-Threshold threshold("threshold", 70, 255);
+Threshold threshold("threshold", 200, 255);
 SunSensor sensor(SENSOR_ANALOG, "sensor", &threshold, 7);
-LimitedDarknessHandler darknessHandler(1024);
+LimitedDarknessHandler darknessHandler(1024 * 60 * 60 * 6);
 
 void setup()
 {
@@ -43,8 +43,6 @@ void setup()
   .setDither(BRIGHTNESS < 255);
 
   FastLED.setBrightness(BRIGHTNESS);
-
-
 
   btStop();
 }
@@ -68,7 +66,7 @@ void loop()
     }
   }
   FastLED.show();
-    
-  Serial.println(darknessHandler.handleDarkness(sensor.read()));
+
+  darknessHandler.handleDarkness(sensor.read());
   delay(50);
 }

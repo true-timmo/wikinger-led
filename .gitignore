@@ -2,3 +2,5 @@
 .vscode
 .vscode/extensions.json
 src/workspace.code-workspace
+src/aurora.cpp.tmp
+platformio copy.ini

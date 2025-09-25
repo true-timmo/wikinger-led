@@ -17,13 +17,13 @@ private:
     {
         unsigned int lowerThreshold = this->threshold->getLevel() < this->sensitivity ? 0 : this->threshold->getLevel() - this->sensitivity;
         if (this->sensorValue <= lowerThreshold) {
-            return this->currentState = true;
+            return this->currentState = false;
         }
 
         unsigned int upperThreshold = this->threshold->getLevel() + this->sensitivity;
         if (this->sensorValue >= upperThreshold)
         {
-            return this->currentState = false;
+            return this->currentState = true;
         }
 
         return this->currentState;
@@ -41,6 +41,7 @@ public:
         this->sensitivity = sensitivity;
 
         pinMode(this->pin, INPUT);
+        analogSetPinAttenuation(this->pin, ADC_11db);
     }
 
     unsigned int getLevel() override
@@ -50,7 +51,7 @@ public:
 
     void setLevel(unsigned int level) override
     {
-        this->sensorValue = map(level, 0, 1023, 0, this->threshold->getUpperLimit());
+        this->sensorValue = map(level, 0, 4095, 0, this->threshold->getUpperLimit());
     }
 
     bool read()

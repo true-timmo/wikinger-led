@@ -10,6 +10,7 @@ class LimitedDarknessHandler: public DarknessHandler
 {
 private:
     unsigned long lightTimelimit = 0;
+    bool resetLimit = true;
     
 public:
     LimitedDarknessHandler(unsigned long lightTimelimit = 0): DarknessHandler() {
@@ -18,14 +19,16 @@ public:
     
     bool handleDarkness(bool isDark)
     {
-        if (!isDark && this->sunsetTimestamp < 0) {
-            this->sunsetTimestamp = 0;
+        if (!isDark) {
+            this->resetLimit = true;
         }
-
-        if (isDark && millis() > (this->sunsetTimestamp + this->lightTimelimit)) {
+        else if (this->resetLimit) {
+            this->resetLimit = false;
+        }
+        else if (millis() > (this->sunsetTimestamp + this->lightTimelimit)) {
             isDark = false;
         }
-        
+
         return DarknessHandler::handleDarkness(isDark);
     };
 };
