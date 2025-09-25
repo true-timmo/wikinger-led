@@ -16,9 +16,13 @@ class RGBFireWave: public Led, public Dimmable
     private:
         static constexpr auto LED_TYPE    = WS2801;
         static constexpr auto COLOR_ORDER = RBG;
-        static constexpr uint8_t WAVE_OFFSET = 3;
-        static constexpr uint8_t SPARKING = 150;
+        static constexpr uint8_t SPARKING = 100;
+        static constexpr uint8_t SPACING = 12;
+        static constexpr uint8_t SPEED = 2;
+        static constexpr uint8_t FRAME_MS = 30; // ms pro Frame
 
+        uint32_t lastMillis = 0;
+        uint8_t phase = 0;
         unsigned int brightness = 255;
         unsigned int num_leds = 4;
         std::vector<CRGB> leds;
@@ -67,17 +71,24 @@ void RGBFireWave<SI_PIN, CLK_PIN>::dim(int value){
 
 template <uint8_t SI_PIN, uint8_t CLK_PIN>
 void RGBFireWave<SI_PIN, CLK_PIN>::switchOn() {
-    for (int i = 0; i < this->leds.size(); i++) {
-        int wave = sin8(i * 12 + WAVE_OFFSET);  // Smooth sine wave motion
+    uint32_t now = millis();
+    if (now - this->lastMillis < FRAME_MS) return;
+    this->lastMillis = now;
+    this->phase += SPEED;
 
-        uint8_t heatLevel = map(wave, 0, 255, 30, 150);  // Control brightness
-        this->leds[i] = HeatColor(heatLevel);  // Convert to fire colors
+    fadeToBlackBy(this->leds.data(), this->leds.size(), 16);
+
+    for (int i = 0; i < (int)this->leds.size(); i++) {
+        int wave = sin8(i * SPACING + this->phase);
+        uint8_t heatLevel = map(wave, 0, 255, 30, 150);
+        CRGB col = HeatColor(heatLevel);
+
+        this->leds[i] = blend(this->leds[i], col, 192);
 
         if (random8() < SPARKING / 5) {
-            this->leds[i] = CRGB::White;  // Occasional white sparks
+            this->leds[i] = CRGB::White;
         }
     }
-
     FastLED.show();
 }
 

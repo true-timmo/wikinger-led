@@ -12,7 +12,7 @@
 #define SI_PIN      GPIO_NUM_12
 
 #define NUM_LEDS    43
-#define BRIGHTNESS  127
+#define BRIGHTNESS  60
 
 #define LED_STATUS 26
 #define ENCODER_DT GPIO_NUM_35
