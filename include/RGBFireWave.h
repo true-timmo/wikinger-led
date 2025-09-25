@@ -20,7 +20,7 @@ class RGBFireWave: public Led, public Dimmable
         static constexpr uint8_t SPARKING = 150;
 
         unsigned int brightness = 255;
-        unsigned int num_leds = 4; //43
+        unsigned int num_leds = 4;
         std::vector<CRGB> leds;
 
 
@@ -36,12 +36,10 @@ class RGBFireWave: public Led, public Dimmable
             this->num_leds = num_leds;
             this->leds.resize(num_leds);
 
-            FastLED.addLeds<LED_TYPE, CLK_PIN, SI_PIN, COLOR_ORDER>(this->leds.data(), num_leds)
+            FastLED.addLeds<LED_TYPE, SI_PIN, CLK_PIN, COLOR_ORDER>(this->leds.data(), num_leds)
                 .setCorrection(UncorrectedColor)
                 .setDither(this->brightness < 255);
             FastLED.setBrightness(this->brightness);
-
-            this->switchOff();
         };
 
         virtual ~RGBFireWave() {};
@@ -85,7 +83,11 @@ void RGBFireWave<SI_PIN, CLK_PIN>::switchOn() {
 
 template <uint8_t SI_PIN, uint8_t CLK_PIN>
 void RGBFireWave<SI_PIN, CLK_PIN>::switchOff() {
-    FastLED.clear();
+    for (auto &c : this->leds) c = CRGB::Black;
+    if (!this->leds.empty()) this->leds[0] = CRGB::Black;
+
+    FastLED.show();
+    delay(1);
 }
 
 template <uint8_t SI_PIN, uint8_t CLK_PIN>

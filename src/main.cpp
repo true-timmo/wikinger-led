@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <ESP32Encoder.h>
+// #include <ESP32Encoder.h>
 #include <esp_bt.h>
 #include <EEPROM.h>
 #include <map>
@@ -11,7 +11,7 @@
 #define CLK_PIN     GPIO_NUM_14
 #define SI_PIN      GPIO_NUM_12
 
-#define NUM_LEDS    4 //43
+#define NUM_LEDS    43
 #define BRIGHTNESS  127
 
 #define LED_STATUS 26
@@ -33,7 +33,7 @@ void setup()
   EEPROM.begin(32);
   delay(100);
 
-  //ledStrip.dim(BRIGHTNESS);
+  ledStrip.dim(BRIGHTNESS);
   darknessHandler.addLed(&ledStrip);
 
   btStop();
@@ -43,5 +43,5 @@ void loop()
 {
   darknessHandler.handleDarkness(sensor.read());
 
-  delay(50);
+  delay(100);
 }
