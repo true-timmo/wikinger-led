@@ -28,9 +28,14 @@ class DarknessHandler: public Dimmable
         
         void switchOff()
         {
-            this->lightsOn = false;
-            for (auto& led : this->leds) {
-                led->switchOff();
+            if (this->lightsOn) {
+                this->lightsOn = false;
+
+                for (auto& led : this->leds) {
+                    led->switchOff();
+                }
+
+                Serial.println(this->outputNightTime());
             }
         };
 
@@ -39,6 +44,8 @@ class DarknessHandler: public Dimmable
             if (!this->lightsOn) {
                 this->sunsetTimestamp = millis();
                 this->lightsOn = true;
+
+                Serial.println(this->outputSunsetMessage());
             }
            
             for (auto& led : this->leds) {

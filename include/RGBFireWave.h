@@ -34,9 +34,12 @@ class RGBFireWave: public Led, public Dimmable
 
         RGBFireWave(const char* name, int num_leds): Led(SI_PIN), Dimmable(name) {
             this->num_leds = num_leds;
+            this->leds.resize(num_leds);
 
-            FastLED.addLeds<LED_TYPE, SI_PIN, CLK_PIN, COLOR_ORDER>(leds.data(), num_leds)
-                .setCorrection(UncorrectedColor);
+            FastLED.addLeds<LED_TYPE, CLK_PIN, SI_PIN, COLOR_ORDER>(this->leds.data(), num_leds)
+                .setCorrection(UncorrectedColor)
+                .setDither(this->brightness < 255);
+            FastLED.setBrightness(this->brightness);
 
             this->switchOff();
         };
@@ -66,14 +69,14 @@ void RGBFireWave<SI_PIN, CLK_PIN>::dim(int value){
 
 template <uint8_t SI_PIN, uint8_t CLK_PIN>
 void RGBFireWave<SI_PIN, CLK_PIN>::switchOn() {
-    for (int i = 0; i < this->num_leds; i++) {
+    for (int i = 0; i < this->leds.size(); i++) {
         int wave = sin8(i * 12 + WAVE_OFFSET);  // Smooth sine wave motion
 
         uint8_t heatLevel = map(wave, 0, 255, 30, 150);  // Control brightness
         this->leds[i] = HeatColor(heatLevel);  // Convert to fire colors
 
         if (random8() < SPARKING / 5) {
-            leds[i] = CRGB::White;  // Occasional white sparks
+            this->leds[i] = CRGB::White;  // Occasional white sparks
         }
     }
 
@@ -87,7 +90,7 @@ void RGBFireWave<SI_PIN, CLK_PIN>::switchOff() {
 
 template <uint8_t SI_PIN, uint8_t CLK_PIN>
 bool RGBFireWave<SI_PIN, CLK_PIN>::isOn() {
-    for (int i = 0; i < this->num_leds; i++) {
+    for (int i = 0; i < this->leds.size(); i++) {
         if (this->leds[i] != CRGB::Black) {
             return true;
         }

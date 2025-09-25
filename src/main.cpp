@@ -33,7 +33,7 @@ void setup()
   EEPROM.begin(32);
   delay(100);
 
-  ledStrip.dim(BRIGHTNESS);
+  //ledStrip.dim(BRIGHTNESS);
   darknessHandler.addLed(&ledStrip);
 
   btStop();
