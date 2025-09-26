@@ -16,10 +16,10 @@ class RGBFireWave: public Led, public Dimmable
     private:
         static constexpr auto LED_TYPE    = WS2801;
         static constexpr auto COLOR_ORDER = RBG;
-        static constexpr uint8_t SPARKING = 100;
+        static constexpr uint8_t SPARKING = 2;
         static constexpr uint8_t SPACING = 12;
         static constexpr uint8_t SPEED = 2;
-        static constexpr uint8_t FRAME_MS = 30; // ms pro Frame
+        static constexpr uint8_t FRAME_MS = 20; // ms pro Frame
 
         uint32_t lastMillis = 0;
         uint8_t phase = 0;
@@ -85,7 +85,7 @@ void RGBFireWave<SI_PIN, CLK_PIN>::switchOn() {
 
         this->leds[i] = blend(this->leds[i], col, 192);
 
-        if (random8() < SPARKING / 5) {
+        if (random16() < SPARKING * 255) {
             this->leds[i] = CRGB::White;
         }
     }

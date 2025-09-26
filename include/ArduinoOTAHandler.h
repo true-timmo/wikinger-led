@@ -5,6 +5,7 @@
 #include <ArduinoOTA.h>
 #include "WebSocketEventHandler.h"
 #include "Target.h"
+#include "Led.h"
 
 class ArduinoOTAHandler: public Target
 {
