@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 #include <ArduinoOTA.h>
-#include "WebSocketEventHandler.h"
 #include "Target.h"
 #include "Led.h"
 
@@ -12,20 +11,18 @@ class ArduinoOTAHandler: public Target
     private:
         static ArduinoOTAHandler* instance;  // Statische Instanzreferenz
         Led* statusLed;
-        WebSocketEventHandler* eventHandler;
 
         void wsTextAll(String text)
         {
-            this->eventHandler->textAll(text);
+            Serial.println(text);
         };
             
     protected:
         bool otaHandlerEnabled = false;
 
     public:
-        ArduinoOTAHandler(const char* name, WebSocketEventHandler* eventHandler, Led* statusLed): Target(name)
+        ArduinoOTAHandler(const char* name, Led* statusLed): Target(name)
         {
-            this->eventHandler = eventHandler;
             this->statusLed = statusLed;
 
             // Setze den statischen Zeiger auf die aktuelle Instanz
