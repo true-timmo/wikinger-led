@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include <esp_wifi.h>
 #include <functional>
 
 class TimedWifiAccessPoint {
@@ -58,10 +59,16 @@ public:
     // Sofort stoppen und WiFi ausschalten
     void stop() {
         if (!_active) return;
-        // Stoppe AP
-        WiFi.softAPdisconnect(true);
-        // Schalte WiFi aus (optional)
+
+        // Stoppe WiFi (deaktiviert auch den MAC/PHY)
+        esp_err_t err = esp_wifi_stop();
+        (void)err;
+
+        err = esp_wifi_deinit();
+        (void)err;
+
         WiFi.mode(WIFI_OFF);
+
         _active = false;
         if (_onStopped) _onStopped();
     }
