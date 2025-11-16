@@ -42,6 +42,10 @@ void setup()
   Serial.begin(115200);
   EEPROM.begin(32);
   btStop();
+
+  pinMode(GPIO_NUM_27, OUTPUT_OPEN_DRAIN);
+  digitalWrite(GPIO_NUM_27, HIGH);
+
   delay(100);
 
   wakeup_reason = esp_sleep_get_wakeup_cause();
@@ -49,6 +53,9 @@ void setup()
     Serial.println("Immer noch hell, gehe wieder schlafen...");
 
     ledStrip.switchOff();
+    digitalWrite(GPIO_NUM_27, LOW);
+    delay(200);
+    digitalWrite(GPIO_NUM_27, HIGH);
     esp_sleep_enable_timer_wakeup(SLEEP_TIMEOUT);
     esp_deep_sleep_start();
   } else {
