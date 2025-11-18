@@ -6,7 +6,7 @@
 #include "soc/rtc.h"
 #include "SunSensor.h"
 #include "LimitedDarknessHandler.h"
-#include "RGBFireWave.h"
+#include "RGBRedWave.h"
 #include "TimedWifiAccessPoint.h"
 #include "ArduinoOTAHandler.h"
 
@@ -19,7 +19,7 @@
 #define SI_PIN      GPIO_NUM_12
 
 #define NUM_LEDS    43
-#define BRIGHTNESS  60
+#define BRIGHTNESS  80
 #define SLEEP_TIMEOUT (1000ULL * 1000ULL * 20) // 20 Sekunden
 
 #define ENCODER_DT GPIO_NUM_35
@@ -27,13 +27,13 @@
 #define ENCODER_SWITCH GPIO_NUM_32
 #define SENSOR_ANALOG GPIO_NUM_33
 
-TimedWifiAccessPoint ap(APSSID, APPSK, 120000UL); // 2 Minuten
+//TimedWifiAccessPoint ap(APSSID, APPSK, 120000UL); // 2 Minuten
 
 Threshold threshold("threshold", 200, 255);
 SunSensor sensor(SENSOR_ANALOG, "sensor", &threshold, 7);
 LimitedDarknessHandler darknessHandler(1024 * 60 * 60 * 6);
-RGBFireWave<SI_PIN, CLK_PIN> ledStrip("ledStrip", NUM_LEDS);
-ArduinoOTAHandler ota("otaHandler", &ledStrip);
+RGBRedWave<SI_PIN, CLK_PIN> ledStrip("ledStrip", NUM_LEDS);
+//ArduinoOTAHandler ota("otaHandler", &ledStrip);
 
 esp_sleep_wakeup_cause_t wakeup_reason;
 
@@ -60,8 +60,8 @@ void setup()
     esp_deep_sleep_start();
   } else {
     Serial.println("Normaler Reset oder Power-On");
-    ap.begin();
-    ota.setup();
+    //ap.begin();
+    //ota.setup();
   }
 
   ledStrip.dim(BRIGHTNESS);
@@ -70,20 +70,21 @@ void setup()
 
 void loop()
 {
-  const bool isApActive = ap.update();
+  //const bool isApActive = ap.update();
 
-  if (isApActive == true && ap.getClientCount() > 0) {
-    ota.setLevel(1);
-    ota.handle();
-  } else {
-    bool isDark = darknessHandler.handleDarkness(sensor.read());
+  //if (isApActive == true && ap.getClientCount() > 0) {
+  //  ota.setLevel(1);
+  //  ota.handle();
+  //} else {
+    bool isDark = sensor.read();
+    darknessHandler.handleDarkness(isDark);
 
-    if (isApActive == false && sensor.read() == false) {
+    if (isDark == false) {
       Serial.println("Noch hell, gehe schlafen...");
       esp_sleep_enable_timer_wakeup(SLEEP_TIMEOUT);
       esp_deep_sleep_start();
     }
-  }
+  //}
 
   delay(100);
 }
