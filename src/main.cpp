@@ -13,6 +13,7 @@
 #define SENSOR_ANALOG GPIO_NUM_3
 #define POWER_KEY_PIN GPIO_NUM_10
 #define BATTERY_PIN   GPIO_NUM_4   // Spannungsteiler 1:1 (2x 1 MOhm + 100 nF)
+#define STATUS_LED_PIN GPIO_NUM_8  // blaue Onboard-LED (low-aktiv)
 #else
 // ESP32 DevKit V4
 #define CLK_PIN       GPIO_NUM_14
@@ -20,6 +21,7 @@
 #define SENSOR_ANALOG GPIO_NUM_33
 #define POWER_KEY_PIN GPIO_NUM_27
 #define BATTERY_PIN   -1           // keine Akkumessung
+#define STATUS_LED_PIN -1
 #endif
 
 #include "soc/rtc.h"
@@ -39,6 +41,12 @@
 #define NUM_LEDS    43
 #define BRIGHTNESS  80
 
+// Debug-Ausgabe: Nach dem Deep Sleep braucht der PC etwas, bis die
+// USB-Konsole wieder verbunden ist. Kostet bei jedem Aufwachen diese Zeit
+// an Strom, also für den Dauerbetrieb auf 0 setzen.
+#define DEBUG_USB_WAIT_MS   1500
+#define SENSOR_LOG_MS       2000
+
 //TimedWifiAccessPoint ap(APSSID, APPSK, 120000UL); // 2 Minuten
 
 Threshold threshold("threshold", 200, 255);
@@ -51,12 +59,17 @@ PowerManager power(POWER_KEY_PIN, BATTERY_PIN);
 void setup()
 {
   Serial.begin(115200);
+#if ARDUINO_USB_CDC_ON_BOOT
+  Serial.setTxTimeoutMs(0); // ohne angeschlossenen PC nicht blockieren
+#endif
+  delay(DEBUG_USB_WAIT_MS);
   EEPROM.begin(32);
   btStop();
 
+  power.setStatusLed(STATUS_LED_PIN);
   power.begin();
-  power.releasePinOnSleep(SI_PIN);
-  power.releasePinOnSleep(CLK_PIN);
+  power.pullDownOnSleep(SI_PIN);
+  power.pullDownOnSleep(CLK_PIN);
 
   delay(100);
 
@@ -66,7 +79,10 @@ void setup()
     power.sleep(battery);
   }
 
-  if (sensor.read() == false) {
+  const bool isDark = sensor.read();
+  sensor.printStatus();
+
+  if (isDark == false) {
     Serial.println("Noch hell, gehe schlafen...");
     power.setNightOver(false);
     power.sleep();
@@ -97,6 +113,7 @@ void loop()
       if (battery != PowerManager::BatteryState::Ok) {
         Serial.println("Akku schwach, LEDs aus");
         ledStrip.switchOff();
+        power.notifyLedsOff();
         power.sleep(battery);
       }
     }
@@ -104,14 +121,23 @@ void loop()
     const bool isDark = sensor.read();
     const bool lightsOn = darknessHandler.handleDarkness(isDark);
 
+    static unsigned long lastSensorLog = 0;
+    if (millis() - lastSensorLog >= SENSOR_LOG_MS) {
+      lastSensorLog = millis();
+      sensor.printStatus();
+    }
+
     if (isDark == false) {
+      sensor.printStatus();
       Serial.println("Hell geworden, gehe schlafen...");
+      power.notifyLedsOff();
       power.setNightOver(false);
       power.sleep();
     }
 
     if (lightsOn == false) {
       Serial.println("Maximale Leuchtdauer erreicht, schlafe bis morgen...");
+      power.notifyLedsOff();
       power.setNightOver(true);
       power.sleep();
     }

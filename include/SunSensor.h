@@ -11,6 +11,7 @@ private:
     int pin;
     Threshold* threshold;
     unsigned int sensorValue;
+    unsigned int rawValue = 0;
     unsigned int sensitivity;
     bool currentState = false;
     bool isDark()
@@ -56,8 +57,26 @@ public:
 
     bool read()
     {
-        this->setLevel(analogRead(this->pin));
+        this->rawValue = analogRead(this->pin);
+        this->setLevel(this->rawValue);
         return this->isDark();
+    }
+
+    // Rohwert des ADC (0-4095) der letzten Messung
+    unsigned int getRawValue()
+    {
+        return this->rawValue;
+    }
+
+    // Gibt die letzte Messung samt Schaltschwellen auf der Konsole aus
+    void printStatus()
+    {
+        const unsigned int t = this->threshold->getLevel();
+        Serial.printf("[Sensor] roh=%u wert=%u hell<=%u dunkel>=%u -> %s\n",
+            this->rawValue, this->sensorValue,
+            t < this->sensitivity ? 0 : t - this->sensitivity,
+            t + this->sensitivity,
+            this->currentState ? "dunkel" : "hell");
     }
 };
 
