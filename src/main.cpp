@@ -19,8 +19,8 @@
 #define SI_PIN        GPIO_NUM_12
 #define SENSOR_ANALOG GPIO_NUM_33
 #define POWER_KEY_PIN GPIO_NUM_27
+#define BATTERY_PIN   -1           // keine Akkumessung
 #endif
-
 
 #include "soc/rtc.h"
 #include "SunSensor.h"
@@ -28,6 +28,7 @@
 #include "RGBRedWave.h"
 #include "TimedWifiAccessPoint.h"
 #include "ArduinoOTAHandler.h"
+#include "PowerManager.h"
 
 #ifndef APSSID
 #define APSSID "Wikinger"
@@ -35,18 +36,8 @@
 #endif
 
 
-
 #define NUM_LEDS    43
 #define BRIGHTNESS  80
-#define SLEEP_TIMEOUT       (1000ULL * 1000ULL * 20)      // 20 Sekunden
-#define SLEEP_TIMEOUT_EMPTY (1000ULL * 1000ULL * 60 * 30) // 30 Minuten bei leerem Akku
-
-// Akkugrenzen in mV (Spannung am Akku, nicht am Pin)
-#define BATTERY_DIVIDER       2.0f  // bei Bedarf gegen Multimeter kalibrieren
-#define BATTERY_CRITICAL_MV   3100  // darunter nur noch lange schlafen
-#define BATTERY_LOW_MV        3300  // darunter LEDs aus
-#define BATTERY_RECOVERED_MV  3600  // LEDs erst wieder ab hier (Hysterese)
-#define BATTERY_CHECK_MS      10000
 
 //TimedWifiAccessPoint ap(APSSID, APPSK, 120000UL); // 2 Minuten
 
@@ -54,56 +45,8 @@ Threshold threshold("threshold", 200, 255);
 SunSensor sensor(SENSOR_ANALOG, "sensor", &threshold, 7);
 LimitedDarknessHandler darknessHandler(1024 * 60 * 60 * 6);
 RGBRedWave<SI_PIN, CLK_PIN> ledStrip("ledStrip", NUM_LEDS);
+PowerManager power(POWER_KEY_PIN, BATTERY_PIN);
 //ArduinoOTAHandler ota("otaHandler", &ledStrip);
-
-// Überlebt den Deep Sleep: Akku war leer und muss erst wieder geladen werden
-RTC_DATA_ATTR bool batteryLow = false;
-unsigned long lastBatteryCheck = 0;
-
-uint32_t readBatteryMillivolts()
-{
-#ifdef BATTERY_PIN
-  uint32_t sum = 0;
-  for (int i = 0; i < 16; i++) {
-    sum += analogReadMilliVolts(BATTERY_PIN);
-  }
-  return (uint32_t)((sum / 16) * BATTERY_DIVIDER);
-#else
-  return 4200; // keine Messung auf der alten Hardware
-#endif
-}
-
-// Prüft den Akku. Liefert false, wenn die LEDs nicht leuchten dürfen.
-bool checkBattery(uint32_t mv)
-{
-  if (mv < BATTERY_LOW_MV) {
-    batteryLow = true;
-  } else if (mv >= BATTERY_RECOVERED_MV) {
-    batteryLow = false;
-  }
-  return !batteryLow;
-}
-
-// Kurzer Tastendruck am CD42: schaltet den 5V-Ausgang ein.
-// Achtung: zwei Drücke innerhalb ~1 s schalten ihn wieder aus.
-void pressPowerKey()
-{
-  digitalWrite(POWER_KEY_PIN, LOW);
-  delay(200);
-  digitalWrite(POWER_KEY_PIN, HIGH);
-  delay(100); // Step-up hochfahren lassen
-}
-
-void goToSleep(uint64_t timeout)
-{
-  // Leitungen zur (gleich stromlosen) LED-Kette nicht mehr treiben
-  pinMode(SI_PIN, INPUT);
-  pinMode(CLK_PIN, INPUT);
-
-  Serial.flush();
-  esp_sleep_enable_timer_wakeup(timeout);
-  esp_deep_sleep_start();
-}
 
 void setup()
 {
@@ -111,36 +54,34 @@ void setup()
   EEPROM.begin(32);
   btStop();
 
-  pinMode(POWER_KEY_PIN, OUTPUT_OPEN_DRAIN);
-  digitalWrite(POWER_KEY_PIN, HIGH);
+  power.begin();
+  power.releasePinOnSleep(SI_PIN);
+  power.releasePinOnSleep(CLK_PIN);
 
   delay(100);
 
-  const uint32_t batteryMv = readBatteryMillivolts();
-  Serial.printf("Akku: %u mV\n", batteryMv);
-
-  if (batteryMv < BATTERY_CRITICAL_MV) {
-    Serial.println("Akku fast leer, schlafe lange...");
-    batteryLow = true;
-    goToSleep(SLEEP_TIMEOUT_EMPTY);
-  }
-
-  if (!checkBattery(batteryMv)) {
+  const PowerManager::BatteryState battery = power.checkBattery();
+  if (battery != PowerManager::BatteryState::Ok) {
     Serial.println("Akku schwach, LEDs bleiben aus...");
-    goToSleep(SLEEP_TIMEOUT);
+    power.sleep(battery);
   }
 
   if (sensor.read() == false) {
     Serial.println("Noch hell, gehe schlafen...");
-    goToSleep(SLEEP_TIMEOUT);
+    power.setNightOver(false);
+    power.sleep();
+  }
+
+  if (power.isNightOver()) {
+    Serial.println("Maximale Leuchtdauer erreicht, schlafe bis morgen...");
+    power.sleep();
   }
 
   Serial.println("Dunkel, schalte LED-Versorgung ein");
-  pressPowerKey();
+  power.pressPowerKey();
 
   ledStrip.dim(BRIGHTNESS);
   darknessHandler.addLed(&ledStrip);
-  lastBatteryCheck = millis();
 }
 
 void loop()
@@ -151,23 +92,28 @@ void loop()
   //  ota.setLevel(1);
   //  ota.handle();
   //} else {
-    if (millis() - lastBatteryCheck >= BATTERY_CHECK_MS) {
-      lastBatteryCheck = millis();
-      const uint32_t batteryMv = readBatteryMillivolts();
-
-      if (!checkBattery(batteryMv)) {
-        Serial.printf("Akku schwach (%u mV), LEDs aus\n", batteryMv);
+    if (power.isBatteryCheckDue()) {
+      const PowerManager::BatteryState battery = power.checkBattery();
+      if (battery != PowerManager::BatteryState::Ok) {
+        Serial.println("Akku schwach, LEDs aus");
         ledStrip.switchOff();
-        goToSleep(SLEEP_TIMEOUT);
+        power.sleep(battery);
       }
     }
 
-    bool isDark = sensor.read();
-    darknessHandler.handleDarkness(isDark);
+    const bool isDark = sensor.read();
+    const bool lightsOn = darknessHandler.handleDarkness(isDark);
 
     if (isDark == false) {
       Serial.println("Hell geworden, gehe schlafen...");
-      goToSleep(SLEEP_TIMEOUT);
+      power.setNightOver(false);
+      power.sleep();
+    }
+
+    if (lightsOn == false) {
+      Serial.println("Maximale Leuchtdauer erreicht, schlafe bis morgen...");
+      power.setNightOver(true);
+      power.sleep();
     }
   //}
 
